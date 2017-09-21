@@ -42,6 +42,17 @@
     #define VULCAN_DATA   SM_DATA(VULCAN_SM)
 #endif
 
+// Reduce simulation output to avoid Travis CI build timeouts
+#ifdef TRAVIS
+    #define pr_info_buf(buf, size, str)       dump_buf(buf, size, str)
+    #define pr_debug_buf(buf, size, str)
+    #define pr_verbose_buf(buf, size, str)
+#else
+    #define pr_info_buf(buf, size, str)       dump_buf(buf, size, str)
+    #define pr_debug_buf(buf, size, str)      dump_buf(buf, size, str)
+    #define pr_verbose_buf(buf, size, str)    dump_buf(buf, size, str)
+#endif
+
 //#define BENCH_MAC_COMPUTATION
 #ifdef BENCH_MAC_COMPUTATION
     #include <stdio.h>

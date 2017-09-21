@@ -11,15 +11,11 @@
 DECLARE_VULCAN_ICAN(msp_ican, CAN_SPI_SS, CAN_500_KHZ, CAN_ID_PONG, CAN_ID_AEC_RECV);
 DECLARE_TSC_TIMER(tsc_eval);
 
-VULCAN_DATA uint8_t msg_ping[CAN_PAYLOAD_SIZE] =
-            {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
-VULCAN_DATA uint8_t msg_pong[CAN_PAYLOAD_SIZE] = {0x00};
+VULCAN_DATA const uint8_t msg_ping_init[CAN_PAYLOAD_SIZE] =
+            {0x01, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07};
+VULCAN_DATA uint8_t msg_ping[CAN_PAYLOAD_SIZE];
+VULCAN_DATA uint8_t msg_pong[CAN_PAYLOAD_SIZE];
 VULCAN_DATA uint16_t msg_id;
-
-void __attribute__((noinline)) dump_timer(char *s)
-{
-    printf("%s: %llu\n", s, tsc_eval_get_interval());
-}
 
 void CAN_DRV_FUNC __attribute__((noinline)) sync_recv(void)
 {
@@ -30,6 +26,7 @@ void CAN_DRV_FUNC __attribute__((noinline)) sync_recv(void)
             id != CAN_ID_PONG || !msg[0]);
 }
 
+#if defined (BENCH_RTT) || defined (BENCH_SEND)
 uint64_t total;
 
 void __attribute__ ((noinline)) dump_avg(void)
@@ -39,12 +36,17 @@ void __attribute__ ((noinline)) dump_avg(void)
     printf("average (128 samples) is %llu\n", total);
 }
 
+void __attribute__((noinline)) dump_timer(char *s)
+{
+    printf("%s: %llu\n", s, tsc_eval_get_interval());
+}
+#endif
+
+#ifdef BENCH_SEND
 void VULCAN_FUNC eval_send(void)
 {
     int len, i, rv;
-    ican_eid_t eid;
-    eid.can_id = CAN_ID_PING;
-    eid.ext_id = 0;
+    ican_eid_t eid = {CAN_ID_PING, 0};
 
     pr_progress("measuring (authenticated) send/recv primitives");
     for (int i=0; i < 128;)
@@ -71,12 +73,16 @@ void VULCAN_FUNC eval_send(void)
     TSC_TIMER_END(tsc_eval);
     dump_timer("ican_recv");
 }
+#endif
 
+#ifdef BENCH_DEMO
 void VULCAN_FUNC eval_demo(void)
+__attribute__((optnone)) /* work around compiler bug */
 {
     int rv;
 
     pr_progress("testing authenticated ping-pong round-trip");
+    msg_ping[0] = 2;
     rv = do_send(&msp_ican, CAN_ID_PING, msg_ping, CAN_PAYLOAD_SIZE,
                    /*block=*/1);
     ASSERT(rv >= 0);
@@ -86,9 +92,6 @@ void VULCAN_FUNC eval_demo(void)
 
     #ifndef NOAUTH
         pr_progress("testing pong authentication failure");
-        rv = do_send(&msp_ican, CAN_ID_PING, msg_ping, CAN_PAYLOAD_SIZE,
-                /*block=*/1);
-        ASSERT(rv >= 0);
 
         // NOTE: vatiCAN returns -EINVAL; LeiA should automatically recover
         #ifdef VATICAN_NONCE_SIZE
@@ -105,7 +108,9 @@ void VULCAN_FUNC eval_demo(void)
         pr_progress("authentication failure test succeeded!");
     #endif
 }
+#endif
 
+#ifdef BENCH_RTT
 void VULCAN_FUNC eval_rtt(void)
 {
     int i, len;
@@ -125,12 +130,15 @@ void VULCAN_FUNC eval_rtt(void)
     }
     dump_avg();
 }
+#endif
 
 void VULCAN_ENTRY eval_run(void)
 {
-    int rv;
-    uint8_t stop = 1;
+    int i, rv;
+    uint8_t stop_msg = 0x0;
     eval_do_init(/*own=*/ CAN_ID_AEC_SEND, /*listen=*/ CAN_ID_AEC_RECV);
+    for (i=0; i < CAN_PAYLOAD_SIZE; i++)
+        msg_ping[i] = msg_ping_init[i];
 
     pr_progress("waiting for receiver to come up");
     sync_recv();
@@ -148,7 +156,7 @@ void VULCAN_ENTRY eval_run(void)
     #endif
 
     pr_progress("sending stop signal to receiver process");
-    rv = do_send(&msp_ican, CAN_ID_PING, &stop, 1, /*block=*/1);
+    rv = do_send(&msp_ican, CAN_ID_PING, &stop_msg, 1, /*block=*/1);
     ASSERT(rv >= 0);
     pr_progress("exiting");
 }

@@ -81,7 +81,7 @@ int VULCAN_FUNC vatican_mac_create(uint8_t *mac, uint16_t id, uint8_t* msg,
     ad.doubles[1] = id;
     for (i=0; i < CAN_PAYLOAD_SIZE; i++)
         ad.bytes[VATICAN_NONCE_SIZE+CAN_SID_SIZE+i] = (i < len) ? msg[i] : 0x00;
-    dump_buf(ad.bytes, VATICAN_AD_SIZE, INFO_STR("AD"));
+    pr_debug_buf(ad.bytes, VATICAN_AD_SIZE, INFO_STR("AD"));
  
     // request MAC from hardware
     MAC_TIMER_START();
@@ -89,12 +89,12 @@ int VULCAN_FUNC vatican_mac_create(uint8_t *mac, uint16_t id, uint8_t* msg,
                             VATICAN_AD_SIZE, tag.bytes);
     MAC_TIMER_END();
     ASSERT(i);
-    dump_buf(tag.bytes, SANCUS_TAG_SIZE, INFO_STR("Sancus TAG"));
+    pr_debug_buf(tag.bytes, SANCUS_TAG_SIZE, INFO_STR("Sancus TAG"));
 
     // truncate MAC to 64 bit output
     // NOTE: we discard LSB and keep the MSB part to adhere to AUTOSAR42
     mac_out->quad = tag.quads[1];
-    dump_buf(mac, CAN_PAYLOAD_SIZE, INFO_STR("truncated MAC"));
+    pr_info_buf(mac, CAN_PAYLOAD_SIZE, INFO_STR("truncated MAC"));
 
     return 0;
 }
@@ -148,7 +148,7 @@ int VULCAN_FUNC vatican_receive(ican_t *ican, uint16_t *id, uint8_t *buf,
     if (rv >= 0)
     {
         pr_info1("CAN message received: ID=0x%03x\n", *id);
-        dump_buf(buf, rv, INFO_STR("data"));
+        pr_info_buf(buf, rv, INFO_STR("data"));
 
         #ifdef VATICAN_INCLUDE_NONCE_GENERATOR
             // Unauthenticated Global Nonce Generator hack for testing..
@@ -177,7 +177,11 @@ void VULCAN_FUNC vatican_nonce_reset (uint32_t nonce)
     pr_info2("resetting nonces to %#2x/%#2x (high/low)\n", nonce >> 16, nonce);
 
     for (i = 0; i < vatican_nb_connections; i++)
+    {
         vatican_connections[i].c = nonce;
+        pr_verbose_buf((uint8_t*) &vatican_connections[i],
+                       sizeof(ican_link_info_t), INFO_STR("info_t"));
+    }
 }
 
 // ============ AUTHENTICATED CAN NETWORK INTERFACE ============

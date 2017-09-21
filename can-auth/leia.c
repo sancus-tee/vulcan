@@ -59,7 +59,7 @@ void VULCAN_FUNC leia_mac_create(uint8_t *mac, uint16_t id, uint8_t* msg,
     ad.words[1] = id;
     for (i=0; i < CAN_PAYLOAD_SIZE; i++)
         ad.bytes[LEIA_COUNTER_SIZE+CAN_SID_SIZE+i] = (i < len) ? msg[i] : 0x00;
-    dump_buf(ad.bytes, LEIA_AD_SIZE, INFO_STR("AD"));
+    pr_debug_buf(ad.bytes, LEIA_AD_SIZE, INFO_STR("AD"));
  
     // request MAC from hardware
     MAC_TIMER_START();
@@ -67,12 +67,12 @@ void VULCAN_FUNC leia_mac_create(uint8_t *mac, uint16_t id, uint8_t* msg,
                                 LEIA_AD_SIZE, tag.bytes);
     MAC_TIMER_END();
     ASSERT(i);
-    dump_buf(tag.bytes, SANCUS_TAG_SIZE, INFO_STR("Sancus TAG"));
+    pr_debug_buf(tag.bytes, SANCUS_TAG_SIZE, INFO_STR("Sancus TAG"));
 
     // truncate MAC to 64 bit output
     // NOTE: we discard LSB and keep the MSB part to adhere to AUTOSAR42
     mac_out->quad = tag.quads[1];
-    dump_buf(mac, CAN_PAYLOAD_SIZE, INFO_STR("truncated MAC"));
+    pr_info_buf(mac, CAN_PAYLOAD_SIZE, INFO_STR("truncated MAC"));
 }
 
 void VULCAN_FUNC leia_session_key_gen(void)
@@ -91,7 +91,7 @@ void VULCAN_FUNC leia_session_key_gen(void)
     // 3. reset counter (zero reserved to await AUTH_FAIL response)
     leia_cur->c = 0x1;
 
-    dump_buf((uint8_t*)leia_cur, sizeof(ican_link_info_t), INFO_STR("info_t"));
+    pr_verbose_buf((uint8_t*)leia_cur, sizeof(ican_link_info_t), INFO_STR("info_t"));
 }
 
 void VULCAN_FUNC leia_update_counters(void)
@@ -172,7 +172,7 @@ int VULCAN_FUNC leia_receive(ican_t *ican, uint16_t *id, uint8_t *buf,
 
         pr_info3("CAN message received: ID=0x%03x; cmd=0x%02x; cnt=0x%04x\n", \
                  *id, *cmd, *counter);
-        dump_buf(buf, rv, INFO_STR("data"));
+        pr_info_buf(buf, rv, INFO_STR("data"));
     }
 
     return rv;

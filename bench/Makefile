@@ -1,5 +1,9 @@
+ifndef LIBVULCAN
+    LIBVULCAN = vatican
+endif
+
 # comment below to benchmark (un)protected Sancus+vatiCAN/LeiA
-OPTS = BENCH=0 NOAUTH=0 CAN_AUTH_LIB=leia VULCAN_SM=sm_eval #CAN_DRV_SM=sm_eval
+OPTS = BENCH=0 NOAUTH=0 CAN_AUTH_LIB=$(LIBVULCAN) VULCAN_SM=sm_eval #CAN_DRV_SM=sm_eval
 
 all: send recv
 
@@ -13,8 +17,17 @@ load:
 	${MAKE} -C ecu-send load $(OPTS)
 	${MAKE} -C ecu-recv load $(OPTS)
 
+sim-recv:
+	${MAKE} -C ecu-recv sim $(OPTS) QUIET=1 > sim-recv-out.txt 2>&1
+
+sim-send:
+	${MAKE} -C ecu-send sim $(OPTS)
+
+sim: sim-recv sim-send
+	@echo -e "\n\n----------\nSender/receiver $(LIBVULCAN) simulations succeeded!"
+
 clean:
-	$(RM) *.bin *_sloc.c
+	$(RM) *.bin *_sloc.c sim-recv-out.txt
 	$(MAKE) -C ecu-recv clean
 	$(MAKE) -C ecu-send clean
 
