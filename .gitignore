@@ -1,0 +1,9 @@
+*.elf
+*.o
+*.d
+*.swp
+*.swo
+
+*.bin
+*.hier
+*.fst
