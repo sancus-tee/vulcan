@@ -1,5 +1,5 @@
 # vulcan
-https://travis-ci.org/sancus-pma/vulcan.svg?branch=master
+[![Build Status](https://travis-ci.org/sancus-pma/vulcan.svg?branch=master)](https://travis-ci.org/sancus-pma/vulcan)
 
 This repository contains the source code accompanying our paper on automotive network security which appears in the 2017 ACSAC conference.
 
