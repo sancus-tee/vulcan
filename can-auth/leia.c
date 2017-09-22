@@ -350,7 +350,12 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
     if (fail || (cmd_mac != cmd_expected) || (id_mac != id_mac_expected) ||
        (len_mac != CAN_PAYLOAD_SIZE) || (mac_me.quad != mac_recv.quad))
     {
-        return leia_auth_fail_send(ican, *id);
+        #ifndef LEIA_OMIT_AUTH_FAIL
+            return leia_auth_fail_send(ican, *id);
+        #else
+            pr_info("rejecting invalid message");
+            return -EINVAL;
+        #endif
     }
     
     /* 5. only update counters after successful message verification */

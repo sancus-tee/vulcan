@@ -130,6 +130,19 @@ int VULCAN_FUNC vatican_send(ican_t *ican, uint16_t id, uint8_t *buf,
     #endif
 }
 
+void VULCAN_FUNC vatican_nonce_reset (uint32_t nonce)
+{
+    int i;
+    pr_info2("resetting nonces to %#2x/%#2x (high/low)\n", nonce >> 16, nonce);
+
+    for (i = 0; i < vatican_nb_connections; i++)
+    {
+        vatican_connections[i].c = nonce;
+        pr_verbose_buf((uint8_t*) &vatican_connections[i],
+                       sizeof(ican_link_info_t), INFO_STR("info_t"));
+    }
+}
+
 int VULCAN_FUNC vatican_receive(ican_t *ican, uint16_t *id, uint8_t *buf,
                                 int block)
 {
@@ -169,19 +182,6 @@ int VULCAN_FUNC vatican_receive(ican_t *ican, uint16_t *id, uint8_t *buf,
     }
 
     return rv;
-}
-
-void VULCAN_FUNC vatican_nonce_reset (uint32_t nonce)
-{
-    int i;
-    pr_info2("resetting nonces to %#2x/%#2x (high/low)\n", nonce >> 16, nonce);
-
-    for (i = 0; i < vatican_nb_connections; i++)
-    {
-        vatican_connections[i].c = nonce;
-        pr_verbose_buf((uint8_t*) &vatican_connections[i],
-                       sizeof(ican_link_info_t), INFO_STR("info_t"));
-    }
 }
 
 // ============ AUTHENTICATED CAN NETWORK INTERFACE ============

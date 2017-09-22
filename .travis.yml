@@ -27,8 +27,10 @@ install:
   - cd sancus-support && mkdir build && cd build && cmake .. && sudo make install && cd ../../
 
 script:
-  - cd $DIR && make $TARGET
+  - make $TARGET
 
 env:
-  - LIBVULCAN=vatican DIR=bench TARGET="sim -j2"
-  - LIBVULCAN=leia    DIR=bench TARGET="sim -j2"
+  - LIBVULCAN=vatican TARGET=sim
+  - LIBVULCAN=leia    TARGET=sim
+  - LIBVULCAN=vatican TARGET=demo
+  - LIBVULCAN=leia    TARGET=demo
