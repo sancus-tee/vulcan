@@ -1,33 +1,23 @@
-language: c
 dist: trusty
 sudo: required
 
 notifications:
-  email: false
+  email: true
+
+services:
+  - docker
+
+language: c
 
 before_install:
-  - sudo apt-get install build-essential python3 iverilog tk binutils-msp430 gcc-msp430 msp430-libc msp430mcu expect-dev -y
-  - pyenv global 3.5 && pyenv version && python3 --version
-  - python3 -m pip install pyelftools && printf "import elftools\nprint(elftools)" | python3
-  - sudo apt-get purge clang llvm llvm-* -y && sudo rm -Rf /usr/local/clang-*
-  - wget https://distrinet.cs.kuleuven.be/software/sancus/downloads/clang-sancus_4.0.0_amd64_trusty.deb && sudo dpkg -i clang-sancus_4.0.0_amd64_trusty.deb
-  - clang --version && ldd `which clang`
-  - sudo apt-get purge cmake -y
-  - curl -SL https://cmake.org/files/v3.5/cmake-3.5.2-Linux-x86_64.tar.gz | sudo tar -xzC /opt
-  - export PATH=$PATH:/opt/cmake-3.5.2-Linux-x86_64/bin && cmake --version
-  - curl -SL http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/latest/exports/msp430-gcc-6.4.0.32_linux64.tar.bz2 | sudo tar -xjC /opt 
-  - export PATH=$PATH:/opt/msp430-gcc-6.4.0.32_linux64/bin && msp430-elf-gcc --version
-
-install:
-  - git clone https://github.com/sancus-pma/sancus-compiler.git
-  - cd sancus-compiler && mkdir build && cd build && cmake .. -DSECURITY=128 && sudo make install && cd ../../
-  - git clone https://github.com/sancus-pma/sancus-core.git
-  - cd sancus-core && mkdir build && cd build && cmake .. -DSECURITY=128 -DMASTER_KEY=deadbeefcafebabec0defeeddefec8ed && sudo make install && cd ../../
-  - git clone https://github.com/sancus-pma/sancus-support.git
-  - cd sancus-support && mkdir build && cd build && cmake .. && sudo make install && cd ../../
+  - git clone https://github.com/sancus-pma/sancus-main.git
+  - cd sancus-main/docker && make build SANCUS_SECURITY=128
 
 script:
-  - make $TARGET
+  - docker run -t sancus-devel /bin/sh -c \
+    "git clone https://github.com/sancus-pma/vulcan && cd vulcan &&
+     git checkout $TRAVIS_BRANCH && LIBVULCAN=$LIBVULCAN TRAVIS=1 make $TARGET"
+  - docker ps -a
 
 env:
   - LIBVULCAN=vatican TARGET=sim
