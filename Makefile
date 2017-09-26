@@ -13,6 +13,15 @@ sim:
 demo:
 	${MAKE} -C demo all
 
+mac:
+	${MAKE} -C bench mac
+
+sloc:
+	${MAKE} -C bench sloc
+
+size:
+	${MAKE} -C bench size
+
 clean:
 	${MAKE} -C bench clean
 	${MAKE} -C demo clean

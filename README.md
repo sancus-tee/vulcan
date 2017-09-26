@@ -101,7 +101,7 @@ vulcan$ make clean demo LIBVULCAN=leia # or choose LIBVULCAN=vatican
 
 **TCB size and memory footprint.** To reproduce our source lines of code and
 binary size measurements (sect. 5.1), try respectively `make sloc` and `make
-size` in the `bench` directory.
+size` in the "bench" directory.
 
 ### 4. Run VulCAN in the simulator
 

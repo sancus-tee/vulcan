@@ -22,5 +22,8 @@ script:
 env:
   - LIBVULCAN=vatican TARGET=sim
   - LIBVULCAN=leia    TARGET=sim
+  - LIBVULCAN=vatican TARGET=mac
+  - LIBVULCAN=leia    TARGET=mac
   - LIBVULCAN=vatican TARGET=demo
   - LIBVULCAN=leia    TARGET=demo
+  - TARGET = sloc size
