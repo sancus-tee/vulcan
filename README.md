@@ -49,9 +49,18 @@ Alternatively, sancus-main also features instructions and a Makefile to
 automatically resolve dependencies and build the latest Sancus projects from
 source.
 
-**Note:** VulCAN requires Sancus to be configured to provide 128 bits of
+**Note.** VulCAN requires Sancus to be configured to provide 128 bits of
 security. Use `make SANCUS_SECURITY=128` to override the default 64-bit
-security level.
+security level. Specifically, to get started with a suitable VulCAN Docker
+container, proceed as follows:
+
+```bash
+sancus-main/docker$ make build SANCUS_SECURITY=128
+sancus-main/docker$ make run
+...
+root@b1961553622c:/sancus# git clone https://github.com/sancus-pma/vulcan.git
+root@b1961553622c:/sancus# cd vulcan
+```
 
 ### 2. Test your Sancus distribution
 
@@ -60,8 +69,7 @@ the examples programs in the
 [sancus-examples](https://github.com/sancus-pma/sancus-examples) repository:
 
 ```bash
-$ cd sancus-examples
-$ make SANCUS_SECURITY=128 hello-world.sim
+sancus-examples$ make SANCUS_SECURITY=128 hello-world.sim
 ```
 
 The above command should successfully build the 'hello-world' binary, and start
@@ -82,22 +90,75 @@ environment variable when building the application.
 To build the round-trip time benchmark application (sect. 5.2), use:
 
 ```bash
-$ make clean bench LIBVULCAN=leia # or choose LIBVULCAN=vatican
+vulcan$ make clean bench LIBVULCAN=leia # or choose LIBVULCAN=vatican
 ```
 
 Likewise, to build the extended application scenario (sect. 6), use:
 
 ```bash
-$ make clean demo LIBVULCAN=leia # or choose LIBVULCAN=vatican
+vulcan$ make clean demo LIBVULCAN=leia # or choose LIBVULCAN=vatican
 ```
+
+**TCB size and memory footprint.** To reproduce our source lines of code and
+binary size measurements (sect. 5.1), try respectively `make sloc` and `make
+size` in the `bench` directory.
 
 ### 4. Run VulCAN in the simulator
 
-todo
+To be able to easily experiment with VulCAN without having to buy real CAN
+transceiver hardware and FPGAs, we developed an elementary `ican` interface
+implementation that uses local file I/O to emulate an untrusted CAN bus in the
+`sancus-sim` simulator.
 
-### 5. Run VulCAN on FPGAs with real CAN transceivers
+Proceed as follows to simulate a distributed embedded application that first
+performs a successful authenticated round-trip (ping-pong), and subsequently
+forces an authentication failure.
 
-todo
+```bash
+vulcan/bench$ make clean sim LIBVULCAN=leia # or choose LIBVULCAN=vatican
+```
+
+The above command starts the `ecu-recv` simulation process in the background,
+and continues with the `ecu-send` simulation on the foreground. The foreground
+sender process should output progress information from time to time, but the
+entire simulation takes a *long* time (about 45 minutes on our machines).
+
+The simulation output of the testbench application can also be viewed on the
+[Travis](https://travis-ci.org/sancus-pma/vulcan) continuous integration web
+interface. Note that we rely on the `TRAVIS=1` environment variable to speed up
+continuous integration builds by reducing progress output, and omitting Sancus'
+expensive key derivation process for protected modules.
+
+**MAC computation times.** The simulator emulates CAN transceiver hardware
+using local file I/O, and can therefore *not* be used for macrobenchmark timing
+experiments, as real-world CAN driver interaction and network delays are of
+course not incorporated. Since the simulator simulates the hardware design at
+the gate level, however, it can accurately report the number of CPU cycles
+needed for non-I/O operations. To reproduce our MAC computation measurements
+(sect. 5.2):
+
+```bash
+vulcan/bench$ make mac LIBVULCAN=leia # or choose LIBVULCAN=vatican
+```
+
+### 5. Run VulCAN on FPGAs and real CAN hardware
+
+To evaluate the VulCAN approach in terms of performance overhead, we
+constructed a testbench where we interfaced Sancus-enabled FPGAs with real CAN
+transceiver hardware. Our prototype setup features multiple Xess
+[XuLA2-LX25](http://www.xess.com/shop/product/xula2-lx25/) Spartan-6 FPGAs,
+each synthesized with a Sancus-enabled OpenMSP430
+[core](https://github.com/sancus-pma/sancus-core), and each connected to an
+off-the-shelf Modtronix [im1CAN](http://modtronix.com/im1can) SPI CAN bus
+peripheral module using the popular Microchip
+[MCP2515](http://www.microchip.com/wwwproducts/en/en010406) CAN transceiver
+chip.
+
+Use `make load` to upload the application binaries to the different FPGAs over
+a UART USB connection. The Makefile in the "bench" directory furthermore
+contains an `OPTS` variable that can be adjusted to configure the application
+binary for the various scenarios discussed in the performance evaluation (sect.
+5.2).
 
 ## License
 
