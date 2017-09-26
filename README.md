@@ -1,6 +1,6 @@
 # VulCAN: Efficient Component Authentication and Software Isolation for Automotive Control Networks
 [![Build Status](https://travis-ci.org/sancus-pma/vulcan.svg?branch=master)](https://travis-ci.org/sancus-pma/vulcan)
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: GPL](https://img.shields.io/badge/License-GPL-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 This repository contains the source code accompanying our
 [paper](https://distrinet.cs.kuleuven.be/software/sancus/publications/acsac17.pdf)
@@ -106,7 +106,7 @@ size` in the "bench" directory.
 ### 4. Run VulCAN in the simulator
 
 To be able to easily experiment with VulCAN without having to buy real CAN
-transceiver hardware and FPGAs, we developed an elementary `ican` interface
+transceiver hardware and FPGAs, we developed an elementary "ican" interface
 implementation that uses local file I/O to emulate an untrusted CAN bus in the
 `sancus-sim` simulator.
 
