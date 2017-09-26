@@ -71,7 +71,25 @@ the CPU behavior a the gate-level, however, simulation can take a while (about
 
 ### 3. Build the VulCAN software stack
 
-todo
+As explained in the paper, we implemented and evaluated two recently published
+CAN authentication protocols:
+[vatiCAN](https://www.infsec.cs.uni-saarland.de/~nuernberger/getbibtex.php?type=pdf&citation=nuernberger2016vatican&category=publications)
+and [LeiA](https://www.cs.bham.ac.uk/~garciaf/publications/leia.pdf). The
+`can-auth` directory contains the source code for these "vulcanized" CAN
+authentication libraries, which are selected through the `LIBVULCAN`
+environment variable when building the application.
+
+To build the round-trip time benchmark application (sect. 5.2), use:
+
+```bash
+$ make clean bench LIBVULCAN=leia # or choose LIBVULCAN=vatican
+```
+
+Likewise, to build the extended application scenario (sect. 6), use:
+
+```bash
+$ make clean demo LIBVULCAN=leia # or choose LIBVULCAN=vatican
+```
 
 ### 4. Run VulCAN in the simulator
 
