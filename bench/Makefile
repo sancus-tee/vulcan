@@ -45,3 +45,7 @@ size:
 	msp430-strip ecu-recv/vatican.o -R .comment && msp430-size -A ecu-recv/vatican.o
 	$(MAKE) -C ecu-recv clean all LIBVULCAN=vatican BENCH=1 NO_AUTH=0 VULCAN_SM=sm_eval > /dev/null 2>&1
 	msp430-strip ecu-recv/vatican.o -R .comment && msp430-size -A ecu-recv/vatican.o
+
+# NOTE: measure the amount of cycles needed to compute a MAC (depends on LIBVULCAN)
+mac:
+	$(MAKE) -C ecu-send clean sim BENCH=1 BENCH_MAC=1 VULCAN_SM=sm_eval TRAVIS=1

@@ -132,6 +132,15 @@ void VULCAN_FUNC eval_rtt(void)
 }
 #endif
 
+#ifdef BENCH_MAC_COMPUTATION
+void VULCAN_FUNC eval_mac(void)
+{
+    pr_progress("Benchmarking MAC computation cycles");
+    do_send(&msp_ican, CAN_ID_PING, msg_ping, CAN_PAYLOAD_SIZE, /*block=*/0);
+    EXIT();
+}
+#endif
+
 void VULCAN_ENTRY eval_run(void)
 {
     int i, rv;
@@ -139,6 +148,10 @@ void VULCAN_ENTRY eval_run(void)
     eval_do_init(/*own=*/ CAN_ID_AEC_SEND, /*listen=*/ CAN_ID_AEC_RECV);
     for (i=0; i < CAN_PAYLOAD_SIZE; i++)
         msg_ping[i] = msg_ping_init[i];
+
+    #ifdef BENCH_MAC_COMPUTATION
+        eval_mac();
+    #endif
 
     pr_progress("waiting for receiver to come up");
     sync_recv();
