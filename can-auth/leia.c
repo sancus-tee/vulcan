@@ -22,11 +22,6 @@
  */
 #include "leia.h"
 #include <sancus_support/sm_io.h>
-#include <errno.h>
-
-#if (SANCUS_TAG_SIZE != 16) || (LEIA_KEY_SIZE != SANCUS_KEY_SIZE)
-    #error Sancus+LeiA requires 128-bit MACs
-#endif
 
 // ============ LEIA HELPER FUNCTIONS ============
 

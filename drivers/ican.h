@@ -5,6 +5,7 @@
 #define ICAN_H_INC
 
 #include <stdint.h>
+#include <errno.h>
 
 /* Data type definitions */
 

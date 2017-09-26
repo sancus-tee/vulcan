@@ -23,6 +23,7 @@
 #define VATICAN_H_INC
 
 #include <stdint.h>
+#include <sancus/sm_support.h>
 
 #define VATICAN_NONCE_SIZE  4
 #define VATICAN_AD_SIZE     (CAN_SID_SIZE+CAN_PAYLOAD_SIZE+VATICAN_NONCE_SIZE)
@@ -49,5 +50,9 @@ typedef union {
     uint16_t words[VATICAN_AD_SIZE/2];
     uint32_t doubles[VATICAN_AD_SIZE/4];
 } vatican_ad_t;
+
+#if SANCUS_TAG_SIZE != 16
+    #error Sancus+vatiCAN requires 128-bit MACs
+#endif
 
 #endif

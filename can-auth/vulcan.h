@@ -53,7 +53,6 @@
     #define pr_verbose_buf(buf, size, str)    dump_buf(buf, size, str)
 #endif
 
-//#define BENCH_MAC_COMPUTATION
 #ifdef BENCH_MAC_COMPUTATION
     #include <stdio.h>
     #include <sancus_support/tsc.h>

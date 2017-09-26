@@ -22,11 +22,6 @@
  */
 #include "vatican.h"
 #include <sancus_support/sm_io.h>
-#include <errno.h>
-
-#if SANCUS_TAG_SIZE != 16
-    #error Sancus+vatiCAN requires 128-bit MACs
-#endif
 
 // ============ VATICAN HELPER FUNCTIONS ============
 

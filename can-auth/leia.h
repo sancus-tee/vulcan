@@ -23,6 +23,7 @@
 #define LEIA_H_INC
 
 #include <stdint.h>
+#include <sancus/sm_support.h>
 
 #define LEIA_EPOCH_SIZE     7
 #define LEIA_KEY_SIZE       16
@@ -53,5 +54,9 @@ typedef union {
     uint16_t words[LEIA_AD_SIZE/2];
     uint32_t doubles[LEIA_AD_SIZE/4];
 } leia_ad_t;
+
+#if (SANCUS_TAG_SIZE != 16) || (LEIA_KEY_SIZE != SANCUS_KEY_SIZE)
+    #error Sancus+LeiA requires 128-bit MACs
+#endif
 
 #endif

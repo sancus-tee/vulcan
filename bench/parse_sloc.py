@@ -12,7 +12,7 @@ src  = sys.argv[1]
 skip = 0
 
 # these functions are omitted by the C preprocessor when BENCH=1
-RE = '.*(pr_info|ASSERT|printf|puts|dump_buf).*'
+RE = '.*(pr_|ASSERT|printf|puts|dump_buf).*'
 
 with open(src) as f:
     for line in f:
