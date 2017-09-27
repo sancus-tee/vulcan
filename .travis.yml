@@ -26,4 +26,4 @@ env:
   - LIBVULCAN=leia    TARGET=mac
   - LIBVULCAN=vatican TARGET=demo
   - LIBVULCAN=leia    TARGET=demo
-  - TARGET = sloc size
+  - TARGET="sloc size"
