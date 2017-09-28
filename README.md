@@ -11,7 +11,7 @@ on automotive network security which appears in the 2017 ACSAC conference.
 > Control Networks. In Proceedings of the 33th Annual Computer Security
 > Applications Conference (ACSAC'17).
 
-## Paper Abstract
+## Abstract
 
 Vehicular communication networks have been subject to a growing number of
 attacks that put the safety of passengers at risk. This resulted in millions of
@@ -123,6 +123,8 @@ and continues with the `ecu-send` simulation on the foreground. The foreground
 sender process should output progress information from time to time, but the
 entire simulation takes a *long* time (about 45 minutes on our machines).
 
+![sim-output](https://distrinet.cs.kuleuven.be/software/vulcan/images/demo-sim.png)
+
 The simulation output of the testbench application can also be viewed on the
 [Travis](https://travis-ci.org/sancus-pma/vulcan) continuous integration web
 interface. Note that we rely on the `TRAVIS=1` environment variable to speed up
@@ -153,6 +155,8 @@ off-the-shelf Modtronix [im1CAN](http://modtronix.com/im1can) SPI CAN bus
 peripheral module using the popular Microchip
 [MCP2515](http://www.microchip.com/wwwproducts/en/en010406) CAN transceiver
 chip.
+
+![fpga-setup](https://distrinet.cs.kuleuven.be/software/vulcan/images/demo.jpg)
 
 Use `make load` to upload the application binaries to the different FPGAs over
 a UART USB connection. The Makefile in the "bench" directory furthermore
