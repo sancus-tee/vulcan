@@ -77,6 +77,12 @@ simulating it in the Icarus Verilog simulator. Because `sancus-sim` simulates
 the CPU behavior a the gate-level, however, simulation can take a while (about
 4 to 5 minutes on our machines). Plenty of time to get a coffee ;)
 
+<p align="center">
+  <img src="https://distrinet.cs.kuleuven.be/software/sancus/sancus-sim_small.png"/>
+  <em>Adapted from <a href="https://www.xkcd.com/303/">xkcd</a>.</em>
+</p>
+
+
 ### 3. Build the VulCAN software stack
 
 As explained in the paper, we implemented and evaluated two recently published
