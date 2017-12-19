@@ -4,8 +4,8 @@
 #include <errno.h>
 
 #define BENCH_SEND          0
-#define BENCH_DEMO          1
-#define BENCH_RTT           0
+#define BENCH_DEMO          0
+#define BENCH_RTT           1
 
 /* Authenticated CAN interface, managed by an _unprotected_ driver. */
 DECLARE_VULCAN_ICAN(msp_ican, CAN_SPI_SS, CAN_500_KHZ, CAN_ID_PONG, CAN_ID_AEC_RECV);
@@ -117,7 +117,8 @@ void VULCAN_FUNC eval_rtt(void)
 
     pr_progress("Measuring round-trip time (ping-pong)");
     total = 0;
-    for (i=0; i < 128; i++)
+    // keep the RTT experiment running for ever
+    while (1)
     {
         msg_id = -1;
         /* Measure Round Trip Time for (authenticated) CAN messages */
