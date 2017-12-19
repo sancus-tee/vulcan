@@ -1,5 +1,6 @@
 #include "sm_gateway.h"
 #include <sancus_support/sm_io.h>
+#include <sancus_support/led_digits.h>
 
 // Trigger warning light on instrument cluster on _private_ CAN bus
 #define ic_ican_send ican_send
@@ -46,6 +47,17 @@ void SM_FUNC(sm_gateway) sm_gateway_do_init( void )
     sm_gateway_init = 1;
 }
 
+// Untrusted (unprotected) LED output for visualisation purposes
+void __attribute__( ( noinline ) ) led_accept(void)
+{
+     led_digits_update(' ', 't', 'P', 'E', 'C', 'C', 'A', ' ');
+}
+
+void __attribute__( ( noinline ) ) led_reject(void)
+{
+     led_digits_update(' ', 't', 'C', 'E', 'J', 'E', 'r', ' ');
+}
+
 void SM_ENTRY(sm_gateway) sm_gateway_run( void )
 {
     uint16_t msg_id;
@@ -66,8 +78,12 @@ void SM_ENTRY(sm_gateway) sm_gateway_run( void )
         if ((len = vulcan_recv(&msp_ican, &msg_id, msg,/*block=*/1)) >= 0)
         {
             ican_send(&ic_ican, msg_id, msg, len, /*block=*/1);
+            led_accept();
         }
         else
+        {
            ic_ind(&ic_ican, 0, 0, 1);
+           led_reject();
+        }
     }
 }
