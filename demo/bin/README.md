@@ -1,18 +1,18 @@
-#Instructions to bring up the VulCAN Demo (on the "sancus" Raspberry Pi)
+# Instructions to bring up the VulCAN Demo (on the "sancus" Raspberry Pi)
 
-##Connect the Pi and the USB devices
+## Connect the Pi and the USB devices
 - screen / data projector
 - Pi power supply
 - keyboard, mouse
 - 2 USB hubs from the demo
 
-##Power on USB hubs and dashboards
+## Power on USB hubs and dashboards
 - this will be noisy unless you recently gave the engine an oil change
 - first the small USB hub (power supply for the FPGAs)
 - then the large USB hub (serial ports)
 - finally the dashboards (separate 12V supply)
 
-##Switch on USB ports on the big hub
+## Switch on USB ports on the big hub
 - slowly and in order
 - you should get the following serial devices:
 ```bash
@@ -22,14 +22,14 @@ $ ls /dev/ttyACM* /dev/ttyUSB*
 /dev/ttyUSB1  /dev/ttyUSB4  /dev/ttyUSB7
 ```
 
-##Bring up USBtin:
+## Bring up USBtin:
 ```bash
 $ cd Desktop/VulCAN
 $ java -jar USBtinViewer_v1.3.jar
 ```
 Select /dev/ttyACM0 and 500kbps; select "Monitor" tab/mode for a better overview; there should be lots of messages from the dashboards passing through.
 
-##Load software images:
+## Load software images:
 ```bash
 $ cd git/vulcan/demo/bin
 $ make
