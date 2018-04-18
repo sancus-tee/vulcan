@@ -322,6 +322,10 @@
 #define MCP2515_IRQ_ERROR 0x04
 #define MCP2515_IRQ_WAKEUP 0x08
 
+
+/* TODO temporary hack to get 8MHz CAN transceiver chips working */
+#define CAN_OSC_FREQUENCY 8000000
+
 /* Private interface */
 
 void CAN_DRV_FUNC can_spi_command(ican_t *ican, uint8_t);

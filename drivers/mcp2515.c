@@ -121,10 +121,72 @@ void CAN_DRV_FUNC can_w_bit(ican_t *ican, uint8_t addr, uint8_t mask, uint8_t va
 
 /* ================= MAINTENANCE FUNCTIONS ================= */
 
+/* Bitrate in Hz
+ * propseg_hint in Time Quanta, 1-8
+ * syncjump in Time Quanta, 1-4
+ */
+int do_can_speed(ican_t *ican, uint32_t bitrate, uint8_t propseg_hint, uint8_t syncjump)
+{
+	uint32_t a;
+	uint16_t brp = 0, tq_prop, tq_ps1, tq_ps2;
+	uint8_t c;
+
+	// Sanity check
+	if (!bitrate || bitrate > 1000000)
+		return -1;
+	if (syncjump > 4)
+		return -1;
+	if (!propseg_hint)
+		propseg_hint = 1;
+	if (!syncjump)
+		syncjump = 1;
+
+	// Resolve appropriate bitrate prescaler
+	do {
+		brp++;
+		a = CAN_OSC_FREQUENCY / 2 / brp;  // TQ (Time Quanta) = tOSC / 2
+		a /= bitrate;
+	} while (a > 25);
+
+	if (a < 8)
+		return -1;  // Invalid speed
+
+	a -= 1;  // Sync Seg fixed at 1 TQ
+	if ( (a - propseg_hint) < 3 )
+		propseg_hint = a - 3;
+	if (propseg_hint > 8)
+		propseg_hint = 8;
+
+	// Propagation segment is hinted by the user (can be tweaked to account for long cable runs)
+	tq_prop = propseg_hint;
+	a -= tq_prop;
+	// Split PS1 and PS2 evenly; give bias to PS2 (it needs to be at least 2xTQ)
+	tq_ps1 = a / 2;
+	a -= tq_ps1;
+	tq_ps2 = a;
+
+	if (syncjump >= tq_ps2)
+		syncjump = tq_ps2 - 1;
+
+	// Configure BRP, SJW, TQ_PropSeg, TQ_PS1, TQ_PS2
+	//if ( (mcp2515_ctrl & MCP2515_CANCTRL_REQOP_MASK) != MCP2515_CANCTRL_REQOP_CONFIGURATION )
+		//can_w_bit(MCP2515_CANCTRL, MCP2515_CANCTRL_REQOP_MASK, MCP2515_CANCTRL_REQOP_CONFIGURATION);
+
+	c = ((brp - 1) & 0x3F) | ((syncjump - 1) << 6);
+	can_w_reg(ican, MCP2515_CNF1, &c, 1);
+	can_w_bit(ican, MCP2515_CNF2, MCP2515_CNF2_PRSEG_MASK | MCP2515_CNF2_PHSEG_MASK | MCP2515_CNF2_BTLMODE,
+			  MCP2515_CNF2_BTLMODE | (tq_prop-1) | ((tq_ps1-1) << 3));
+	can_w_bit(ican, MCP2515_CNF3, MCP2515_CNF3_PHSEG_MASK, tq_ps2-1);
+
+	//if ( (mcp2515_ctrl & MCP2515_CANCTRL_REQOP_MASK) != MCP2515_CANCTRL_REQOP_CONFIGURATION )
+		//can_w_bit(MCP2515_CANCTRL, MCP2515_CANCTRL_REQOP_MASK, mcp2515_ctrl);
+	return 0;
+}
+
 /*
  Adjusted from $(can-calc-bit-timing mcp251x):
  (NOTE: corrected: 8MHz output should be 16MHz)
- 
+
  Bit timing parameters for mcp251x with 16.000000 MHz ref clock
  nominal                                 real Bitrt   nom  real SampP
  Bitrate TQ[ns] PrS PhS1 PhS2 SJW BRP Bitrate Error SampP SampP Error CNF1 CNF2 CNF3
@@ -143,6 +205,9 @@ int CAN_DRV_FUNC can_speed(ican_t *ican, can_baudrate_t baudrate)
 {
     uint8_t cnf1, cnf2, cnf3;
     if (!ican) return -EINVAL;
+
+    /* TODO temporary hack to get 8MHz CAN transceiver chips working */
+    return do_can_speed(ican, 500000, 1, 1);
 
     switch (baudrate)
     {
