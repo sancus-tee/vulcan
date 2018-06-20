@@ -94,7 +94,7 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf,
 #define ICAN_VULCAN_F0_MASK    0x00
 
 #define DECLARE_VULCAN_ICAN( ican, spi, rate, id0, id1 )            \
-    DECLARE_ICAN( ican, spi, rate, ICAN_MASK_RECEIVE_SINGLE,        \
+    DECLARE_ICAN_MASK( ican, spi, rate, ICAN_MASK_RECEIVE_SINGLE,   \
                   ICAN_MASK_RECEIVE_SINGLE_AUTH,                    \
                   0x0 | ICAN_VULCAN_F0_MASK, 0x00,                  \
                   id0 | ICAN_FILTER_EXTENDED, id0,                  \
