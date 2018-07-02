@@ -76,6 +76,9 @@ void VULCAN_FUNC leia_session_key_gen(void)
     ASSERT(leia_cur);
 
     // 1. increment epoch
+    // NOTE: should request new random session key from trusted global
+    // Attestation Server on epoch counter overflow (see VulCAN paper)
+    ASSERT(leia_cur->epoch != LEIA_EPOCH_MAX);
     leia_cur->epoch++;
 
     // 2. apply the MAC algorithm on the epoch
@@ -95,9 +98,6 @@ void VULCAN_FUNC leia_update_counters(void)
 
     if (leia_cur->c == LEIA_COUNT_MAX)
     {
-        // NOTE: should request new random session key from trusted global
-        // Attestation Server on epoch counter overflow (see VulCAN paper)
-        ASSERT(leia_cur->epoch != LEIA_EPOCH_MAX);
         leia_session_key_gen();
     }
     else
