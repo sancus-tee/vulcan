@@ -38,4 +38,5 @@ load: $(TARGET)
 
 clean:
 	$(RM) $(TARGET) $(TARGET_NO_MAC) $(OBJECTS) *.o
-
+	$(RM) $(SOURCES:.c=.ll) $(SOURCES:.c=.sllvm.ll) $(SOURCES:.c=.sancus.ll)
+	$(RM) $(SOURCES:.c=.s)
