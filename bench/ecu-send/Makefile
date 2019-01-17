@@ -57,4 +57,5 @@ clean:
 	$(RM) $(SOURCES:.c=.ll) $(SOURCES:.c=.sllvm.ll) $(SOURCES:.c=.sancus.ll)
 	$(RM) $(SOURCES:.c=.s)
 	$(RM) can-drv.s can-drv.ll can-drv.sllvm.ll can-drv.sancus.ll
+	$(RM) can-sim.s can-sim.ll can-sim.sllvm.ll can-sim.sancus.ll
 	$(RM) vatican.s vatican.ll vatican.sllvm.ll vatican.sancus.ll
