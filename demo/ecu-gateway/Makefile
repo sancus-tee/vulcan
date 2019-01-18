@@ -21,14 +21,25 @@ OBJECTS = $(SOURCES:.c=.o) can-drv.o $(LIBVULCAN).o
 all: $(TARGET)
 
 #custom targets since intra-SM libraries cannot be shared
+ifndef SLLVM_INSTALL_DIR
 $(LIBVULCAN).o: $(CAN_AUTH_DIR)/$(LIBVULCAN).c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 can-drv.o: ../../drivers/mcp2515.c
 	$(CC) $(CFLAGS) -c $< -o $@
+else
+$(LIBVULCAN).ll: $(CAN_AUTH_DIR)/$(LIBVULCAN).c
+	$(CC) $(CFLAGS) -S $< -o $@
+
+can-drv.ll: ../../drivers/mcp2515.c
+	$(CC) $(CFLAGS) -S $< -o $@
+
+../../drivers/sm_mmio_spi.sancus.ll: \
+	SANCUS_TRANSFORM_FLAGS += --fix-data-section
+endif
 
 $(TARGET_NO_MAC): $(OBJECTS)
-	$(LD) $(LDFLAGS) -o $@ $^
+	$(LD) $^ $(LDFLAGS) -o $@
 
 $(TARGET): $(TARGET_NO_MAC)
 	$(SANCUS_CRYPTO) $(CRYPTOFLAGS) -o $@ $<
@@ -40,3 +51,5 @@ clean:
 	$(RM) $(TARGET) $(TARGET_NO_MAC) $(OBJECTS) *.o
 	$(RM) $(SOURCES:.c=.ll) $(SOURCES:.c=.sllvm.ll) $(SOURCES:.c=.sancus.ll)
 	$(RM) $(SOURCES:.c=.s)
+	$(RM) can-drv.s can-drv.ll can-drv.sllvm.ll can-drv.sancus.ll
+	$(RM) vatican.s vatican.ll vatican.sllvm.ll vatican.sancus.ll

@@ -35,7 +35,8 @@ else
 $(LIBVULCAN).ll: $(CAN_AUTH_DIR)/$(LIBVULCAN).c
 	$(CC) $(CFLAGS) -S $< -o $@
 
-../../drivers/sm_mmio_kypd.sancus.ll: SANCUS_TRANSFORM_FLAGS += --fix-data-section
+../../drivers/sm_mmio_kypd.sancus.ll: \
+	SANCUS_TRANSFORM_FLAGS += --fix-data-section
 endif
 
 #NOTE: custom memsize flags since TCS system uses another FPGA image
