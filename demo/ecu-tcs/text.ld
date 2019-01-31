@@ -12,5 +12,5 @@ sllvm_pm_sm_mmio_kypd_text_end = .;
 /* Wrap information */
 *(.sllvm.wrap.*)
 
-/* Hashes for secure linking */
-*(.sllvm.hash.*)
+/* Symbols for secure linking */
+*(.sllvm.slink.*)

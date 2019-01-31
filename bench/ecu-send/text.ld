@@ -7,5 +7,5 @@ sllvm_pm_sm_eval_text_end = .;
 /* Wrap information */
 *(.sllvm.wrap.*)
 
-/* Hashes for secure linking */
-*(.sllvm.hash.*)
+/* Symbols for secure linking */
+*(.sllvm.slink.*)
