@@ -1,5 +1,8 @@
 
-all: tcs gateway rpm_sec rpm_plain
+all: checkfpgas tcs gateway rpm_sec rpm_plain
+
+checkfpgas:
+	./checknflash.sh -n 6 -f 0
 
 tcs: tcs.elf
 	sancus-loader -device /dev/ttyUSB0 tcs.elf
@@ -17,4 +20,6 @@ rpm_plain: rpm_insecure.elf
 
 screen:
 	screen /dev/ttyUSB1 115200
+
+
 
