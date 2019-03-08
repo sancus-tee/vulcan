@@ -7,3 +7,8 @@
 *.bin
 *.hier
 *.fst
+
+*.s
+*.ll
+*.sancus.ll
+*.sllvm.ll

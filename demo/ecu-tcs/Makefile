@@ -15,6 +15,11 @@ else
     CFLAGS += -DLEIA_OMIT_AUTH_FAIL
 endif
 
+ifndef SLLVM_INSTALL_DIR
+LDFLAGS += --ram 24K 
+LDFLAGS += --rom 32K
+endif
+
 LDFLAGS += -ldev-pmodkypd
 
 TARGET_NO_MAC = no_mac_$(TARGET)
@@ -23,12 +28,20 @@ OBJECTS = $(SOURCES:.c=.o) $(LIBVULCAN).o
 all: $(TARGET)
 
 #custom targets since intra-SM libraries cannot be shared
+ifndef SLLVM_INSTALL_DIR
 $(LIBVULCAN).o: $(CAN_AUTH_DIR)/$(LIBVULCAN).c
 	$(CC) $(CFLAGS) -c $< -o $@
+else
+$(LIBVULCAN).ll: $(CAN_AUTH_DIR)/$(LIBVULCAN).c
+	$(CC) $(CFLAGS) -S $< -o $@
+
+../../drivers/sm_mmio_kypd.sancus.ll: \
+	SANCUS_TRANSFORM_FLAGS += --fix-data-section
+endif
 
 #NOTE: custom memsize flags since TCS system uses another FPGA image
 $(TARGET_NO_MAC): $(OBJECTS)
-	$(LD) $(LDFLAGS) --ram 24K --rom 32K -o $@ $^
+	$(LD) $^ $(LDFLAGS) -o $@
 
 $(TARGET): $(TARGET_NO_MAC)
 	$(SANCUS_CRYPTO) $(CRYPTOFLAGS) -o $@ $<
@@ -38,4 +51,7 @@ load: $(TARGET)
 
 clean:
 	$(RM) $(TARGET) $(TARGET_NO_MAC) $(OBJECTS) $(DEPS) *.o
+	$(RM) $(SOURCES:.c=.ll) $(SOURCES:.c=.sllvm.ll) $(SOURCES:.c=.sancus.ll)
+	$(RM) $(SOURCES:.c=.s)
+	$(RM) vatican.s vatican.ll vatican.sllvm.ll vatican.sancus.ll
 	$(RM) *.fst *.bin

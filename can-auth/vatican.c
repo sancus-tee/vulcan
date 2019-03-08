@@ -25,6 +25,8 @@
 
 // ============ VATICAN HELPER FUNCTIONS ============
 
+#undef quad
+
 VULCAN_DATA ican_link_info_t  *vatican_connections;
 VULCAN_DATA size_t             vatican_nb_connections;
 VULCAN_DATA ican_link_info_t  *vatican_cur;

@@ -23,6 +23,8 @@
 #include "leia.h"
 #include <sancus_support/sm_io.h>
 
+#undef quad
+
 // ============ LEIA HELPER FUNCTIONS ============
 
 VULCAN_DATA ican_link_info_t  *leia_connections;

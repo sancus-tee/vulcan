@@ -5,5 +5,12 @@ OBJECTS = $(SOURCES:.c=.o)
 
 all: $(OBJECTS)
 
+ifdef SLLVM_INSTALL_DIR
+sm_mmio_kypd.ll: SANCUS_TRANSFORM_FLAGS += --fix-data-section
+sm_mmio_spi.ll : SANCUS_TRANSFORM_FLAGS += --fix-data-section
+sm_mmio_led.ll : SANCUS_TRANSFORM_FLAGS += --fix-data-section
+endif
+
 clean:
-	$(RM) *.o
+	$(RM) $(SOURCES:.c=.ll) $(SOURCES:.c=.sllvm.ll) $(SOURCES:.c=.sancus.ll)
+	$(RM) $(SOURCES:.c=.s)
