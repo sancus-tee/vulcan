@@ -227,7 +227,7 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
     ican_buf_t mac_me;
     ican_buf_t mac_recv;
     uint16_t id_recv;
-    int rv, recv_len, i, fail = 0;
+    int rv, recv_len, i, fail = 1;
 
     /* 1. receive any CAN message (ID | payload) */
     if ((rv = vatican_receive(ican, id, buf, block)) < 0)
