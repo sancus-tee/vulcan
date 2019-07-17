@@ -322,7 +322,7 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
         return -EINVAL;
 
     /* 2. authenticated connection ? process AUTH_FAIL response, if any */
-    if (!leia_find_connection(*id)) return rv;
+    if (!leia_find_connection(*id)) return -EINVAL;
     if ((auth_fail_resp = ((cmd == LEIA_CMD_AEC_EPOCH) && !leia_cur->c)))
     {
         ASSERT(rv == CAN_PAYLOAD_SIZE);
