@@ -22,12 +22,15 @@
  */
 #include "vatican.h"
 #include <sancus_support/sm_io.h>
+#include <sancus_support/timer.h>
 
 // ============ VATICAN HELPER FUNCTIONS ============
 
 VULCAN_DATA ican_link_info_t  *vatican_connections;
 VULCAN_DATA size_t             vatican_nb_connections;
 VULCAN_DATA ican_link_info_t  *vatican_cur;
+VULCAN_DATA uint8_t	       sleep_done;
+VULCAN_DATA uint16_t	       delta = 0x07d0; /* 2000 cycles */
 
 // NOTE: this approach is currently _not_ thread-safe
 void VULCAN_FUNC vatican_commit_nonce_increment(void)
@@ -199,6 +202,9 @@ int VULCAN_FUNC vulcan_init(ican_t *ican, ican_link_info_t connections[],
     ASSERT(rv >= 0);
     pr_info("CAN controller initialized");
 
+    // Initialize timer for IAT nonces
+    timer_init();
+
     return 0;
 }
 
@@ -215,6 +221,7 @@ int VULCAN_FUNC vulcan_send(ican_t *ican, uint16_t id, uint8_t *buf,
     /* 2. known authenticated connection ? send CAN authentication frame */
     if ((rv >= 0) && (vatican_mac_create(mac, id, buf, len) >= 0))
     {
+	
         rv = vatican_send(ican, id+1, mac, CAN_PAYLOAD_SIZE, block);
     }
 
@@ -255,3 +262,85 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
     vatican_commit_nonce_increment();
     return rv;
 }
+
+/*******************************************************************/
+/* IAT */
+/*******************************************************************/
+
+void iat_send_callback(void)
+{
+    timer_disable();
+    sleep_done = 0x1;
+}
+
+long encode_iat(uint32_t nonce)
+{
+    uint32_t masked;
+
+    // Retrieve last 2 nonce bits
+    masked = nonce & 0x00000003;
+    return (masked * delta);    
+}
+
+int VULCAN_FUNC vulcan_send_iat(ican_t *ican, uint16_t id, uint8_t *buf,
+                            uint8_t len, int block)
+{
+    int rv = 0;
+    uint8_t mac[CAN_PAYLOAD_SIZE];
+
+    /* 1. send legacy CAN message (ID | payload) */
+    // NOTE: do not block for ACK, such that we can start the MAC computation
+    rv = vatican_send(ican, id, buf, len, /*block=*/0);
+
+    /* 2. known authenticated connection ? send CAN authentication frame */
+    if ((rv >= 0) && (vatican_mac_create(mac, id, buf, len) >= 0))
+    {
+	// Delay authentication message
+	sleep_done = 0x0;
+	timer_irq(encode_iat(vatican_cur->c+1));
+	while (!sleep_done)
+	;
+
+	// Send authentication message
+        rv = vatican_send(ican, id+1, mac, CAN_PAYLOAD_SIZE, block);
+    }
+
+    vatican_commit_nonce_increment();
+    return rv;
+}
+
+int VULCAN_FUNC vulcan_recv_iat(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
+{
+    ican_buf_t mac_me;
+    ican_buf_t mac_recv;
+    uint16_t id_recv;
+    int rv, recv_len, i, fail = 0;
+
+    /* 1. receive any CAN message (ID | payload) */
+    if ((rv = vatican_receive(ican, id, buf, block)) < 0)
+        return rv;
+
+    /* 2. authenticated connection ? calculate and verify MAC */
+    if (vatican_mac_create(mac_me.bytes, *id, buf, rv) >= 0)
+    {
+        recv_len = vatican_receive(ican, &id_recv, mac_recv.bytes, /*block=*/1);
+        fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||
+                (mac_me.quad != mac_recv.quad);
+    }
+
+    /* 3. drop messages with failed authentication; else increment nonce */
+    if (fail)
+    {
+        // NOTE: VulCAN/vatiCAN nonce-resynchronisation strategy is left
+        // application-dependent (see paper for details); VulCAN/LeiA
+        // implementation comes with a resynchronisation mechanism.
+        pr_info("ignoring wrongly authenticated message..");
+        vatican_cur = NULL;
+        return -EINVAL;
+    }
+
+    vatican_commit_nonce_increment();
+    return rv;
+}
+
+TIMER_ISR_ENTRY(iat_send_callback);

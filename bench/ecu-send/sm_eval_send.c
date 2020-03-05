@@ -3,8 +3,8 @@
 #include <sancus_support/tsc.h>
 #include <errno.h>
 
-#define BENCH_SEND          0
-#define BENCH_DEMO          1
+#define BENCH_SEND          1
+#define BENCH_DEMO          0
 #define BENCH_RTT           0
 
 /* Authenticated CAN interface, managed by an _unprotected_ driver. */
