@@ -21,16 +21,25 @@
  * along with VulCAN. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "vatican.h"
+#include "../drivers/irq_can.h"
 #include <sancus_support/sm_io.h>
 #include <sancus_support/timer.h>
+#include <sancus_support/tsc.h>
 
 // ============ VATICAN HELPER FUNCTIONS ============
 
 VULCAN_DATA ican_link_info_t  *vatican_connections;
 VULCAN_DATA size_t             vatican_nb_connections;
 VULCAN_DATA ican_link_info_t  *vatican_cur;
+
+// IAT channel variables
 VULCAN_DATA uint8_t	       sleep_done;
 VULCAN_DATA uint16_t	       delta = 0x07d0; /* 2000 cycles */
+VULCAN_DATA uint64_t	       iat_timings[8];
+VULCAN_DATA uint8_t	       int_counter = 0;
+
+// timer for measuring IAT values
+DECLARE_TSC_TIMER(iat_timer);
 
 // NOTE: this approach is currently _not_ thread-safe
 void VULCAN_FUNC vatican_commit_nonce_increment(void)
@@ -284,6 +293,27 @@ long encode_iat(uint32_t nonce)
     return (masked * delta);    
 }
 
+void iat_recv_callback(void)
+{
+    // Measure + store IAT
+    TSC_TIMER_END(iat_timer);
+    iat_timings[int_counter] = iat_timer_get_interval();
+    TSC_TIMER_START(iat_timer);
+    
+    // Adjust message count
+    int_counter = (int_counter+1)%8;
+
+    // Clear interrupt flag on MSP430
+    P1IFG = P1IFG & 0xfc;
+}
+
+uint8_t decode_iat(uint64_t iat)
+{
+    /* TODO: implement decoding */
+
+    return 0x0;
+}
+
 int VULCAN_FUNC vulcan_send_iat(ican_t *ican, uint16_t id, uint8_t *buf,
                             uint8_t len, int block)
 {
@@ -345,4 +375,5 @@ int VULCAN_FUNC vulcan_recv_iat(ican_t *ican, uint16_t *id, uint8_t *buf, int bl
     return rv;
 }
 
+CAN_ISR_ENTRY(iat_recv_callback);
 TIMER_ISR_ENTRY(iat_send_callback);

@@ -5,9 +5,9 @@
 #include <stdint.h>
 
 #define CAN_IRQ_VECTOR    4 /* For P1, 6 for P2 */
-#define ISR_STACK_SIZE (4096)
+#define CAN_ISR_STACK_SIZE (512)
 
-uint16_t __isr_stack[ISR_STACK_SIZE];
+uint16_t __can_isr_stack[CAN_ISR_STACK_SIZE];
 extern void* __isr_sp;
 
 void ican_irq_init(ican_t *ican);
