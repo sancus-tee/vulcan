@@ -457,3 +457,17 @@ void CAN_DRV_FUNC msp_sleep(volatile uint32_t n)
   }
   return;
 }
+
+/* ================= IRQ CAN ================= */
+
+void ican_irq_init(ican_t *ican)
+{
+    // CAN module enable interrupt on receive
+    can_w_bit(ican, MCP2515_CANINTE,  MCP2515_CANINTE_RX0IE, 0x01);
+    can_w_bit(ican, MCP2515_CANINTE,  MCP2515_CANINTE_RX1IE, 0x02);
+    
+    // MSP P1.0 enable interrupt on negative edge
+    P1IE = 0x01;
+    P1IES = 0x01;
+    P1IFG = 0x00;
+}

@@ -1,4 +1,5 @@
 #include "../common/sm_eval.h"
+#include "../../drivers/irq_can.h"
 #include <sancus_support/sm_io.h>
 #include <errno.h>
 

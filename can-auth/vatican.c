@@ -202,6 +202,8 @@ int VULCAN_FUNC vulcan_init(ican_t *ican, ican_link_info_t connections[],
     ASSERT(rv >= 0);
     pr_info("CAN controller initialized");
 
+
+
     // Initialize timer for IAT nonces
     timer_init();
 
