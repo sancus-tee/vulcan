@@ -41,6 +41,9 @@ VULCAN_DATA uint8_t	       int_counter = 0;
 // timer for measuring IAT values
 DECLARE_TSC_TIMER(iat_timer);
 
+// timer for measuring MAC calculation
+DECLARE_TSC_TIMER(mac_timer);
+
 // NOTE: this approach is currently _not_ thread-safe
 void VULCAN_FUNC vatican_commit_nonce_increment(void)
 {
@@ -211,8 +214,6 @@ int VULCAN_FUNC vulcan_init(ican_t *ican, ican_link_info_t connections[],
     ASSERT(rv >= 0);
     pr_info("CAN controller initialized");
 
-
-
     // Initialize timer for IAT nonces
     timer_init();
 
@@ -295,13 +296,13 @@ long encode_iat(uint32_t nonce)
 
 void iat_recv_callback(void)
 {
+    // Adjust message count
+    int_counter = (int_counter+1)%8;    
+
     // Measure + store IAT
     TSC_TIMER_END(iat_timer);
     iat_timings[int_counter] = iat_timer_get_interval();
     TSC_TIMER_START(iat_timer);
-    
-    // Adjust message count
-    int_counter = (int_counter+1)%8;
 
     // Clear interrupt flag on MSP430
     P1IFG = P1IFG & 0xfc;
@@ -309,9 +310,11 @@ void iat_recv_callback(void)
 
 uint8_t decode_iat(uint64_t iat)
 {
-    /* TODO: implement decoding */
+    uint16_t deltas;
 
-    return 0x0;
+    deltas = (iat + (delta/2))/delta;
+
+    return deltas;
 }
 
 int VULCAN_FUNC vulcan_send_iat(ican_t *ican, uint16_t id, uint8_t *buf,
@@ -347,15 +350,20 @@ int VULCAN_FUNC vulcan_recv_iat(ican_t *ican, uint16_t *id, uint8_t *buf, int bl
     ican_buf_t mac_recv;
     uint16_t id_recv;
     int rv, recv_len, i, fail = 0;
+    uint64_t mac_timing;
 
     /* 1. receive any CAN message (ID | payload) */
     if ((rv = vatican_receive(ican, id, buf, block)) < 0)
         return rv;
 
     /* 2. authenticated connection ? calculate and verify MAC */
+    TSC_TIMER_START(mac_timer);
     if (vatican_mac_create(mac_me.bytes, *id, buf, rv) >= 0)
     {
+	TSC_TIMER_END(mac_timer);
+	mac_timing = mac_timer_get_interval();
         recv_len = vatican_receive(ican, &id_recv, mac_recv.bytes, /*block=*/1);
+        nonce = decode_iat(iat_timings[int_counter] - mac_timing);
         fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||
                 (mac_me.quad != mac_recv.quad);
     }
