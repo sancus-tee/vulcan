@@ -3,8 +3,8 @@
 #include <sancus_support/tsc.h>
 #include <errno.h>
 
-#define BENCH_SEND          1
-#define BENCH_DEMO          0
+#define BENCH_SEND          0
+#define BENCH_DEMO          1
 #define BENCH_RTT           0
 
 /* Authenticated CAN interface, managed by an _unprotected_ driver. */
@@ -99,13 +99,15 @@ __attribute__((optnone)) /* work around compiler bug */
         #else
             eval_connections[1].k_e[0] = 0xff;
         #endif
-        rv = do_recv(&msp_ican, &msg_id, msg_pong, /*block=*/1);
+        rv = vulcan_recv_iat(&msp_ican, &msg_id, msg_pong, /*block=*/1);
         ASSERT(rv < 0);
         while (rv == -EAGAIN)
-            rv = do_recv(&msp_ican, &msg_id, msg_pong, /*block=*/1);
+            rv = vulcan_recv_iat(&msp_ican, &msg_id, msg_pong, /*block=*/1);
 
         ASSERT((rv == -EINVAL) || (rv >= 0 && (msg_id == CAN_ID_PONG)));
         pr_progress("authentication failure test succeeded!");
+
+	pr_progress("testing pong authentication failure");
     #endif
 }
 #endif

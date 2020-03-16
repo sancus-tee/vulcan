@@ -31,7 +31,7 @@ void VULCAN_ENTRY eval_run(void)
     {
         /* Reply with (authenticated) pong message(s) */
         for (i = 0; i < msg_ping[0]; i++)
-            do_send(&msp_ican, CAN_ID_PONG, msg_pong, CAN_PAYLOAD_SIZE, /*block=*/1);
+            vulcan_send_iat(&msp_ican, CAN_ID_PONG, msg_pong, CAN_PAYLOAD_SIZE, /*block=*/1);
     }
     pr_progress("Stop signal received; exiting");
 }
