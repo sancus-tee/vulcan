@@ -279,13 +279,13 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
 /* IAT */
 /*******************************************************************/
 
-void iat_send_callback(void)
+void VULCAN_FUNC iat_send_callback(void)
 {
     timer_disable();
     sleep_done = 0x1;
 }
 
-long encode_iat(uint32_t nonce)
+long VULCAN_FUNC encode_iat(uint32_t nonce)
 {
     uint32_t masked;
 
@@ -294,7 +294,7 @@ long encode_iat(uint32_t nonce)
     return (masked * delta);    
 }
 
-void iat_recv_callback(void)
+void VULCAN_FUNC iat_recv_callback(void)
 {
     // Adjust message count
     int_counter = (int_counter+1)%8;    
@@ -308,7 +308,7 @@ void iat_recv_callback(void)
     P1IFG = P1IFG & 0xfc;
 }
 
-uint8_t decode_iat(uint64_t iat)
+uint8_t VULCAN_FUNC decode_iat(uint64_t iat)
 {
     uint16_t deltas;
 
@@ -351,6 +351,7 @@ int VULCAN_FUNC vulcan_recv_iat(ican_t *ican, uint16_t *id, uint8_t *buf, int bl
     uint16_t id_recv;
     int rv, recv_len, i, fail = 0;
     uint64_t mac_timing;
+    uint8_t iat_nonce;
 
     /* 1. receive any CAN message (ID | payload) */
     if ((rv = vatican_receive(ican, id, buf, block)) < 0)
@@ -363,7 +364,7 @@ int VULCAN_FUNC vulcan_recv_iat(ican_t *ican, uint16_t *id, uint8_t *buf, int bl
 	TSC_TIMER_END(mac_timer);
 	mac_timing = mac_timer_get_interval();
         recv_len = vatican_receive(ican, &id_recv, mac_recv.bytes, /*block=*/1);
-        nonce = decode_iat(iat_timings[int_counter] - mac_timing);
+        iat_nonce = decode_iat(iat_timings[int_counter] - mac_timing);
         fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||
                 (mac_me.quad != mac_recv.quad);
     }

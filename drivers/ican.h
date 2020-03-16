@@ -81,7 +81,7 @@ int CAN_DRV_FUNC ican_recv_ext(ican_t *ican, ican_eid_t *eid, uint8_t *buf,
 int CAN_DRV_FUNC ican_ioctl(ican_t *ican, uint8_t option, uint8_t val);
 
 // DSN18 VERSION
-/* 
+/*
 #define DECLARE_ICAN_MASK( ican, spi, rate, m0, m1, f0, f1, f2, f3, f4, f5) \
     CAN_DRV_DATA ican_t ican = {                                            \
         .spi_dev = spi,                                                     \
