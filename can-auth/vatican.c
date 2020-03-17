@@ -33,8 +33,8 @@ VULCAN_DATA size_t             vatican_nb_connections;
 VULCAN_DATA ican_link_info_t  *vatican_cur;
 
 // IAT channel variables
-VULCAN_DATA uint8_t	       sleep_done;
-VULCAN_DATA uint16_t	       delta = 0x07d0; /* 2000 cycles */
+VULCAN_DATA uint8_t	       sleep;
+VULCAN_DATA uint16_t	       delta = 4000; /* 2000 cycles */
 VULCAN_DATA uint64_t	       iat_timings[8];
 VULCAN_DATA uint8_t	       int_counter = 0;
 
@@ -216,6 +216,8 @@ int VULCAN_FUNC vulcan_init(ican_t *ican, ican_link_info_t connections[],
 
     // Initialize timer for IAT nonces
     timer_init();
+
+    ican_irq_init(ican);
     asm("eint\n\t");
 
     return 0;
@@ -282,7 +284,7 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
 void VULCAN_FUNC iat_send_callback(void)
 {
     timer_disable();
-    sleep_done = 0x1;
+    sleep = 0x0;
 }
 
 long VULCAN_FUNC encode_iat(uint32_t nonce)
@@ -333,15 +335,18 @@ int VULCAN_FUNC vulcan_send_iat(ican_t *ican, uint16_t id, uint8_t *buf,
     if ((rv >= 0) && (vatican_mac_create(mac, id, buf, len) >= 0))
     {
 	// Delay authentication message
-	sleep_done = 0x0;
-	counter = encode_iat(vatican_cur->c+1);
-	while (counter > 0) 
+	sleep = 0x1;
+	timer_irq(encode_iat(vatican_cur->c+1));
+	TSC_TIMER_START(mac_timer);
+	while (sleep)
 	{
-	    counter--;
+	    asm("nop"); // Prevent inlining
 	}
+	TSC_TIMER_END(mac_timer);
 
 	// Send authentication message
         rv = vatican_send(ican, id+1, mac, CAN_PAYLOAD_SIZE, block);
+   	pr_info1("IAT SLEEPING SEND TIME: %u", mac_timer_get_interval()); 
     }
 
     vatican_commit_nonce_increment();
@@ -377,7 +382,8 @@ int VULCAN_FUNC vulcan_recv_iat(ican_t *ican, uint16_t *id, uint8_t *buf, int bl
     if (fail)
     {
 	pr_info("retry");
-	pr_info1("original nonce: %u", mac_timing);
+	pr_info1("iat_timing: %u", iat_timings[int_counter]);
+	pr_info1("mac_timing: %u", mac_timing);
 	if ((vatican_cur->c & 0x00000003) > iat_nonce)
 	{
 	    iat_nonce = iat_nonce + 4;
