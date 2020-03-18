@@ -95,7 +95,7 @@ __attribute__((optnone)) /* work around compiler bug */
 
         // NOTE: vatiCAN returns -EINVAL; LeiA should automatically recover
         #ifdef VATICAN_NONCE_SIZE
-            eval_connections[1].c++;
+            eval_connections[1].c--;
         #else
             eval_connections[1].k_e[0] = 0xff;
         #endif

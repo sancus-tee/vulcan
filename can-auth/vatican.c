@@ -34,7 +34,7 @@ VULCAN_DATA ican_link_info_t  *vatican_cur;
 
 // IAT channel variables
 VULCAN_DATA uint8_t	       sleep;
-VULCAN_DATA uint16_t	       delta = 4000; /* 2000 cycles */
+VULCAN_DATA uint32_t	       delta = 4000; /* 2000 cycles */
 VULCAN_DATA uint64_t	       iat_timings[8];
 VULCAN_DATA uint8_t	       int_counter = 0;
 
@@ -311,12 +311,13 @@ void VULCAN_FUNC iat_recv_callback(void)
     P1IFG = P1IFG & 0xfc;
 }
 
-uint8_t VULCAN_FUNC decode_iat(uint64_t iat)
+uint32_t VULCAN_FUNC decode_iat(uint64_t iat)
 {
-    uint8_t deltas;
+    uint32_t deltas;
 
-    deltas = (iat + (delta/2))/delta;
-
+    pr_info1("IAT DECODE INPUT: %u", iat);
+    deltas = ((int)((iat + (delta/2))))/((int)(delta));
+    pr_info1("IAT DECODE OUTPUT: %u", deltas);
     return deltas;
 }
 
@@ -384,10 +385,12 @@ int VULCAN_FUNC vulcan_recv_iat(ican_t *ican, uint16_t *id, uint8_t *buf, int bl
 	pr_info("retry");
 	pr_info1("iat_timing: %u", iat_timings[int_counter]);
 	pr_info1("mac_timing: %u", mac_timing);
+	pr_info1("iat nonce: %u", iat_nonce);
 	if ((vatican_cur->c & 0x00000003) > iat_nonce)
 	{
 	    iat_nonce = iat_nonce + 4;
 	}
+	pr_info1("old nonce: %u", vatican_cur->c);
 	vatican_cur->c = (vatican_cur->c & 0xffffffffc) + iat_nonce;
 	pr_info1("new nonce: %u", iat_nonce);
 	if (vatican_mac_create(mac_me.bytes, *id, buf, rv) >= 0)
