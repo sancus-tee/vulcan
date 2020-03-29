@@ -26,6 +26,8 @@
 #include <sancus_support/timer.h>
 #include <sancus_support/tsc.h>
 
+#define VATITACAN	1
+
 // ============ VATICAN HELPER FUNCTIONS ============
 
 VULCAN_DATA ican_link_info_t  *vatican_connections;
@@ -223,6 +225,8 @@ int VULCAN_FUNC vulcan_init(ican_t *ican, ican_link_info_t connections[],
     return 0;
 }
 
+long encode_iat(uint32_t nonce);
+
 int VULCAN_FUNC vulcan_send(ican_t *ican, uint16_t id, uint8_t *buf,
                             uint8_t len, int block)
 {
@@ -236,6 +240,18 @@ int VULCAN_FUNC vulcan_send(ican_t *ican, uint16_t id, uint8_t *buf,
     /* 2. known authenticated connection ? send CAN authentication frame */
     if ((rv >= 0) && (vatican_mac_create(mac, id, buf, len) >= 0))
     {	
+	#ifdef VATITACAN
+
+	    // Delay authentication message
+            sleep = 0x1;
+            timer_irq(encode_iat(vatican_cur->c+1));
+            while (sleep)
+            {
+            	asm("nop"); // Prevent inlining
+            }
+
+	#endif
+
         rv = vatican_send(ican, id+1, mac, CAN_PAYLOAD_SIZE, block);
     }
 
@@ -243,24 +259,70 @@ int VULCAN_FUNC vulcan_send(ican_t *ican, uint16_t id, uint8_t *buf,
     return rv;
 }
 
+uint32_t decode_iat(uint64_t iat);
+
 int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
 {
     ican_buf_t mac_me;
     ican_buf_t mac_recv;
     uint16_t id_recv;
+    uint32_t old_nonce;
+    uint32_t iat_nonce;
+    uint64_t mac_timing;
     int rv, recv_len, i, fail = 0;
 
     /* 1. receive any CAN message (ID | payload) */
     if ((rv = vatican_receive(ican, id, buf, block)) < 0)
         return rv;
 
-    /* 2. authenticated connection ? calculate and verify MAC */
-    if (vatican_mac_create(mac_me.bytes, *id, buf, rv) >= 0)
-    {
-        recv_len = vatican_receive(ican, &id_recv, mac_recv.bytes, /*block=*/1);
-        fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||
+    #ifdef VATITACAN
+        TSC_TIMER_START(mac_timer);
+        if (vatican_mac_create(mac_me.bytes, *id, buf, rv) >= 0)
+        {
+            TSC_TIMER_END(mac_timer);
+            mac_timing = mac_timer_get_interval();
+            recv_len = vatican_receive(ican, &id_recv, mac_recv.bytes, /*block=*/1);
+            iat_nonce = decode_iat(iat_timings[int_counter] - mac_timing);
+            fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||
                 (mac_me.quad != mac_recv.quad);
-    }
+    	}
+    #else
+	/* 2. authenticated connection ? calculate and verify MAC */
+        if (vatican_mac_create(mac_me.bytes, *id, buf, rv) >= 0)
+        {
+            recv_len = vatican_receive(ican, &id_recv, mac_recv.bytes, /*block=*/1);
+            fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||
+                (mac_me.quad != mac_recv.quad);
+        }
+    #endif
+
+    #ifdef VATITACAN
+    	/* 3.0 Retry failed verification based on IAT */
+    	if (fail)
+    	{
+	    old_nonce = vatican_cur->c;
+		
+	    // Enable only nonce increments
+            if ((vatican_cur->c & 0x00000003) > iat_nonce)
+            {
+            	iat_nonce = iat_nonce + 4;
+            }
+
+	    // Retry authentication using IAT nonce
+            vatican_cur->c = (vatican_cur->c & 0xffffffffc) + iat_nonce;
+            if (vatican_mac_create(mac_me.bytes, *id, buf, rv) >= 0)
+            {
+           	fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||
+                (mac_me.quad != mac_recv.quad);
+            }
+
+	    // Reset to original nonce if resynchronisation failed
+	    if (fail)
+	    {   
+                vatican_cur->c = old_nonce;
+            }
+    	}
+    #endif
 
     /* 3. drop messages with failed authentication; else increment nonce */
     if (fail)
@@ -281,11 +343,13 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
 /* IAT */
 /*******************************************************************/
 
+#ifdef VATITACAN
 void VULCAN_FUNC iat_send_callback(void)
 {
     timer_disable();
     sleep = 0x0;
 }
+#endif
 
 long VULCAN_FUNC encode_iat(uint32_t nonce)
 {
@@ -297,6 +361,7 @@ long VULCAN_FUNC encode_iat(uint32_t nonce)
     return (masked * delta);    
 }
 
+#ifdef VATITACAN
 void VULCAN_FUNC iat_recv_callback(void)
 {
     // Adjust message count
@@ -310,17 +375,16 @@ void VULCAN_FUNC iat_recv_callback(void)
     // Clear interrupt flag on MSP430
     P1IFG = P1IFG & 0xfc;
 }
+#endif
 
 uint32_t VULCAN_FUNC decode_iat(uint64_t iat)
 {
     uint32_t deltas;
-
-    pr_info1("IAT DECODE INPUT: %u", iat);
     deltas = ((int)((iat + (delta/2))))/((int)(delta));
-    pr_info1("IAT DECODE OUTPUT: %u", deltas);
     return deltas;
 }
 
+// TODO: This is here for legacy reasons
 int VULCAN_FUNC vulcan_send_iat(ican_t *ican, uint16_t id, uint8_t *buf,
                             uint8_t len, int block)
 {
@@ -347,13 +411,14 @@ int VULCAN_FUNC vulcan_send_iat(ican_t *ican, uint16_t id, uint8_t *buf,
 
 	// Send authentication message
         rv = vatican_send(ican, id+1, mac, CAN_PAYLOAD_SIZE, block);
-   	pr_info1("IAT SLEEPING SEND TIME: %u", mac_timer_get_interval()); 
     }
 
     vatican_commit_nonce_increment();
     return rv;
 }
 
+
+// TODO: This is here for legacy reasons
 int VULCAN_FUNC vulcan_recv_iat(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
 {
     ican_buf_t mac_me;
@@ -382,22 +447,22 @@ int VULCAN_FUNC vulcan_recv_iat(ican_t *ican, uint16_t *id, uint8_t *buf, int bl
     /* 3. Retry failed verification based on IAT */
     if (fail)
     {
-	pr_info("retry");
-	pr_info1("iat_timing: %u", iat_timings[int_counter]);
-	pr_info1("mac_timing: %u", mac_timing);
-	pr_info1("iat nonce: %u", iat_nonce);
+	pr_info("AUTHENTICATION FAILED -> RETRY USING IAT NONCE");
 	if ((vatican_cur->c & 0x00000003) > iat_nonce)
 	{
 	    iat_nonce = iat_nonce + 4;
 	}
-	pr_info1("old nonce: %u", vatican_cur->c);
 	vatican_cur->c = (vatican_cur->c & 0xffffffffc) + iat_nonce;
-	pr_info1("new nonce: %u", iat_nonce);
 	if (vatican_mac_create(mac_me.bytes, *id, buf, rv) >= 0)
     	{
 	    fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||
                 (mac_me.quad != mac_recv.quad);
 	}
+
+	if (! fail)
+	{
+            pr_info("AUTHENTICATION SUCCEEDED AFTER IAT RETRY");
+        }
     }
 
     /* 4. drop messages with failed authentication; else increment nonce */
@@ -415,5 +480,7 @@ int VULCAN_FUNC vulcan_recv_iat(ican_t *ican, uint16_t *id, uint8_t *buf, int bl
     return rv;
 }
 
+#ifdef VATITACAN
 CAN_ISR_ENTRY(iat_recv_callback);
 TIMER_ISR_ENTRY(iat_send_callback);
+#endif
