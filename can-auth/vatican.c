@@ -220,10 +220,10 @@ int VULCAN_FUNC vulcan_init(ican_t *ican, ican_link_info_t connections[],
     ASSERT(rv >= 0);
     pr_info("CAN controller initialized");
 
-    // Initialize timer for IAT nonces
-    timer_init();
-
     #if VATITACAN
+	// Initialize timer for IAT measurement
+        timer_init();
+
     	nonce_size = VATITACAN_NONCE_SIZE;
 	while (nonce_size)
 	{
@@ -280,8 +280,7 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
     ican_buf_t mac_me;
     ican_buf_t mac_recv;
     uint16_t id_recv;
-    uint32_t old_nonce;
-    uint32_t iat_nonce;
+    uint32_t old_nonce, iat_nonce;
     uint64_t mac_timing;
     int rv, recv_len, i, fail = 0;
 
