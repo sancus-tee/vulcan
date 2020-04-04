@@ -26,7 +26,9 @@
 #include <sancus_support/timer.h>
 #include <sancus_support/tsc.h>
 
-#define VATITACAN	1
+#define VATITACAN	       1
+#define VATITACAN_NONCE_SIZE   2
+#define VATITACAN_DELTA	       4000
 
 // ============ VATICAN HELPER FUNCTIONS ============
 
@@ -34,17 +36,19 @@ VULCAN_DATA ican_link_info_t  *vatican_connections;
 VULCAN_DATA size_t             vatican_nb_connections;
 VULCAN_DATA ican_link_info_t  *vatican_cur;
 
+#if VATITACAN
 // IAT channel variables
-VULCAN_DATA uint8_t	       sleep;
-VULCAN_DATA uint32_t	       delta = 4000; /* 2000 cycles */
-VULCAN_DATA uint64_t	       iat_timings[8];
-VULCAN_DATA uint8_t	       int_counter = 0;
+VULCAN_DATA uint8_t	       sleeping;
+VULCAN_DATA uint64_t	       iat_timings[8]; /* Holds past 8 IAT values */
+VULCAN_DATA uint8_t	       interrupt_index = 0;
+VULCAN_DATA uint32_t	       nonce_mask = 1;
 
 // timer for measuring IAT values
 DECLARE_TSC_TIMER(iat_timer);
 
-// timer for measuring MAC calculation
+// timer for measuring MAC computation times
 DECLARE_TSC_TIMER(mac_timer);
+#endif
 
 // NOTE: this approach is currently _not_ thread-safe
 void VULCAN_FUNC vatican_commit_nonce_increment(void)
@@ -201,7 +205,7 @@ int VULCAN_FUNC vatican_receive(ican_t *ican, uint16_t *id, uint8_t *buf,
 int VULCAN_FUNC vulcan_init(ican_t *ican, ican_link_info_t connections[],
                             size_t nb_connections)
 {
-    int rv;
+    int rv, nonce_size;
 
     if (!connections) return -EINVAL;
 
@@ -220,6 +224,14 @@ int VULCAN_FUNC vulcan_init(ican_t *ican, ican_link_info_t connections[],
     timer_init();
 
     #if VATITACAN
+    	nonce_size = VATITACAN_NONCE_SIZE;
+	while (nonce_size)
+	{
+	    nonce_mask = nonce_mask*2;
+	    nonce_size--;
+	}
+	nonce_mask--;
+
         ican_irq_init(ican);
 	asm("eint\n\t");
     #endif
@@ -245,9 +257,9 @@ int VULCAN_FUNC vulcan_send(ican_t *ican, uint16_t id, uint8_t *buf,
 	#if VATITACAN
 
 	    // Delay authentication message
-            sleep = 0x1;
+            sleeping = 0x1;
             timer_irq(encode_iat(vatican_cur->c+1));
-            while (sleep)
+            while (sleeping)
             {
             	asm("nop"); // Prevent inlining
             }
@@ -284,7 +296,7 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
             TSC_TIMER_END(mac_timer);
             mac_timing = mac_timer_get_interval();
             recv_len = vatican_receive(ican, &id_recv, mac_recv.bytes, /*block=*/1);
-            iat_nonce = decode_iat(iat_timings[int_counter] - mac_timing);
+            iat_nonce = decode_iat(iat_timings[interrupt_index] - mac_timing);
             fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||
                 (mac_me.quad != mac_recv.quad);
     	}
@@ -305,13 +317,13 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
 	    old_nonce = vatican_cur->c;
 		
 	    // Enable only nonce increments
-            if ((vatican_cur->c & 0x00000003) > iat_nonce)
+            if ((vatican_cur->c & nonce_mask) > iat_nonce)
             {
-            	iat_nonce = iat_nonce + 4;
+            	iat_nonce = iat_nonce + nonce_mask+1;
             }
 
 	    // Retry authentication using IAT nonce
-            vatican_cur->c = (vatican_cur->c & 0xffffffffc) + iat_nonce;
+            vatican_cur->c = (vatican_cur->c & (0xfffffffff-nonce_mask)) + iat_nonce;
             if (vatican_mac_create(mac_me.bytes, *id, buf, rv) >= 0)
             {
            	fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||
@@ -349,7 +361,7 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
 void VULCAN_FUNC iat_send_callback(void)
 {
     timer_disable();
-    sleep = 0x0;
+    sleeping = 0x0;
 }
 #endif
 
@@ -359,9 +371,9 @@ long VULCAN_FUNC encode_iat(uint32_t nonce)
     uint32_t masked;
 
     // Retrieve last 2 nonce bits
-    masked = nonce & 0x00000003;
+    masked = nonce & nonce_mask;
 
-    return (masked * delta);    
+    return (masked * VATITACAN_DELTA);    
 }
 #endif
 
@@ -369,11 +381,11 @@ long VULCAN_FUNC encode_iat(uint32_t nonce)
 void VULCAN_FUNC iat_recv_callback(void)
 {
     // Adjust message count
-    int_counter = (int_counter+1)%8;    
+    interrupt_index = (interrupt_index+1)%8;    
 
     // Measure + store IAT
     TSC_TIMER_END(iat_timer);
-    iat_timings[int_counter] = iat_timer_get_interval();
+    iat_timings[interrupt_index] = iat_timer_get_interval();
     TSC_TIMER_START(iat_timer);
 
     // Clear interrupt flag on MSP430
@@ -385,7 +397,7 @@ void VULCAN_FUNC iat_recv_callback(void)
 uint32_t VULCAN_FUNC decode_iat(uint64_t iat)
 {
     uint32_t deltas;
-    deltas = ((int)((iat + (delta/2))))/((int)(delta));
+    deltas = ((int)((iat + (VATITACAN_DELTA/2))))/((int)(VATITACAN_DELTA));
     return deltas;
 }
 #endif

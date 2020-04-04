@@ -1,11 +1,11 @@
 #ifndef IRQ_CAN_H_INC
 #define IRQ_CAN_H_INC
 
-#include <msp430.h> // I guess this should be inn sancus-support then?
+#include <msp430.h>
 #include <stdint.h>
 
-#define CAN_IRQ_VECTOR    4 /* For P1, 6 for P2 */
-#define CAN_ISR_STACK_SIZE (512)
+#define CAN_IRQ_VECTOR    	4 /* For P1, 6 for P2 */
+#define CAN_ISR_STACK_SIZE 	(512)
 
 uint16_t __can_isr_stack[CAN_ISR_STACK_SIZE];
 extern void* __isr_sp;

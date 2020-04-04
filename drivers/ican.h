@@ -80,33 +80,6 @@ int CAN_DRV_FUNC ican_recv_ext(ican_t *ican, ican_eid_t *eid, uint8_t *buf,
                            int block);
 int CAN_DRV_FUNC ican_ioctl(ican_t *ican, uint8_t option, uint8_t val);
 
-// DSN18 VERSION
-/*
-#define DECLARE_ICAN_MASK( ican, spi, rate, m0, m1, f0, f1, f2, f3, f4, f5) \
-    CAN_DRV_DATA ican_t ican = {                                            \
-        .spi_dev = spi,                                                     \
-        .baudrate = rate,                                                   \
-        .rxm0 = m0,                                                         \
-        .rxm1 = m1,                                                         \
-        .rxf0 = f0,                                                         \
-        .rxf1 = f1,                                                         \
-        .rxf2 = f2,                                                         \
-        .rxf3 = f3,                                                         \
-        .rxf4 = f4,                                                         \
-        .rxf5 = f5,                                                         \
-    }
-
-#define DECLARE_ICAN( ican, spi, rate )                                     \
-    DECLARE_ICAN_MASK( ican, spi, rate, ICAN_MASK_RECEIVE_SINGLE,              \
-                  ICAN_MASK_RECEIVE_SINGLE, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04)
-
-#define DECLARE_ICAN_SIMPLEX( ican, spi, rate )                             \
-    DECLARE_ICAN_MASK( ican, spi, rate, ICAN_MASK_RECEIVE_SINGLE,           \
-                  ICAN_MASK_RECEIVE_SINGLE, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
-*/ 
-
-// MASTER VERSION
-
 #define DECLARE_ICAN( ican, spi, rate, m0, m1, f0, f1, f2, f3, f4, f5)      \
     CAN_DRV_DATA ican_t ican = {                                            \
         .spi_dev = spi,                                                     \
