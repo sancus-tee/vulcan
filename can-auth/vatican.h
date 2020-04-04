@@ -50,9 +50,9 @@ typedef union {
     uint16_t words[VATICAN_AD_SIZE/2];
     uint32_t doubles[VATICAN_AD_SIZE/4];
 } vatican_ad_t;
-
+/*
 #if SANCUS_TAG_SIZE != 16
     #error Sancus+vatiCAN requires 128-bit MACs
 #endif
-
+*/
 #endif

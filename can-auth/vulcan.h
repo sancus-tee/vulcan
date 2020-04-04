@@ -91,12 +91,6 @@ int VULCAN_FUNC vulcan_send(ican_t *ican, uint16_t id, uint8_t *buf,
 int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf,
                               int block);
 
-int VULCAN_FUNC vulcan_send_iat(ican_t *ican, uint16_t id, uint8_t *buf,
-                              uint8_t len, int block);
-
-int VULCAN_FUNC vulcan_recv_iat(ican_t *ican, uint16_t *id, uint8_t *buf,
-                              int block);
-
 #define ICAN_VULCAN_F0_MASK    0x00
 
 #define DECLARE_VULCAN_ICAN( ican, spi, rate, id0, id1 )            \

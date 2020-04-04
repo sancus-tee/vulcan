@@ -79,37 +79,33 @@ void VULCAN_FUNC eval_send(void)
 void VULCAN_FUNC eval_demo(void)
 __attribute__((optnone)) /* work around compiler bug */
 {
-    int rv;
+     int rv;
 
-    pr_progress("CASE 1: authenticated ping-pong round-trip");
+    pr_progress("testing authenticated ping-pong round-trip");
     msg_ping[0] = 2;
     rv = do_send(&msp_ican, CAN_ID_PING, msg_ping, CAN_PAYLOAD_SIZE,
                    /*block=*/1);
     ASSERT(rv >= 0);
     rv = do_recv(&msp_ican, &msg_id, msg_pong, /*block=*/1);
     ASSERT((rv >= 0) && (msg_id == CAN_ID_PONG));
-    pr_progress("CASE 1: authenticated ping-pong test succeeded!");
+    pr_progress("authenticated ping-pong test succeeded!");
 
     #ifndef NOAUTH
-        pr_progress("CASE 1: authenticated pong message loss");
-
-	pr_info("DROPPING MESSAGE");
+        pr_progress("testing pong authentication failure");
 
         // NOTE: vatiCAN returns -EINVAL; LeiA should automatically recover
         #ifdef VATICAN_NONCE_SIZE
-            eval_connections[1].c--;
+            eval_connections[1].c++;
         #else
             eval_connections[1].k_e[0] = 0xff;
         #endif
-        rv = vulcan_recv(&msp_ican, &msg_id, msg_pong, /*block=*/1);
+        rv = do_recv(&msp_ican, &msg_id, msg_pong, /*block=*/1);
         ASSERT(rv < 0);
         while (rv == -EAGAIN)
-            rv = vulcan_recv(&msp_ican, &msg_id, msg_pong, /*block=*/1);
+            rv = do_recv(&msp_ican, &msg_id, msg_pong, /*block=*/1);
 
         ASSERT((rv == -EINVAL) || (rv >= 0 && (msg_id == CAN_ID_PONG)));
-        pr_progress("CASE 1: message loss test succeeded!");
-
-	// pr_progress("testing pong authentication failure");
+        pr_progress("authentication failure test succeeded!");
     #endif
 }
 #endif
