@@ -447,12 +447,6 @@ int CAN_DRV_FUNC ican_ioctl(ican_t *ican, uint8_t option, uint8_t val)
 
       can_r_reg(ican, MCP2515_RXF2SIDL, &buf, 1);
       printf1("RXF2SIDL=0x%02x\n", buf);
-
-      can_r_reg(ican, MCP2515_RXF0SIDH, &buf, 1);
-      printf1("RXF0SIDH=0x%02x ", buf);
-
-      can_r_reg(ican, MCP2515_RXF0SIDL, &buf, 1);
-      printf1("RXF0SIDL=0x%02x\n", buf);
     }
 #endif
 

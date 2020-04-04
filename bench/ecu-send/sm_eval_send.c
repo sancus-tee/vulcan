@@ -79,7 +79,7 @@ void VULCAN_FUNC eval_send(void)
 void VULCAN_FUNC eval_demo(void)
 __attribute__((optnone)) /* work around compiler bug */
 {
-     int rv;
+    int rv;
 
     pr_progress("testing authenticated ping-pong round-trip");
     msg_ping[0] = 2;

@@ -1,5 +1,4 @@
 #include "../common/sm_eval.h"
-//#include "../../drivers/irq_can.h"
 #include <sancus_support/sm_io.h>
 #include <errno.h>
 
@@ -31,7 +30,7 @@ void VULCAN_ENTRY eval_run(void)
     {
         /* Reply with (authenticated) pong message(s) */
         for (i = 0; i < msg_ping[0]; i++)
-            vulcan_send(&msp_ican, CAN_ID_PONG, msg_pong, CAN_PAYLOAD_SIZE, /*block=*/1);
+            do_send(&msp_ican, CAN_ID_PONG, msg_pong, CAN_PAYLOAD_SIZE, /*block=*/1);
     }
     pr_progress("Stop signal received; exiting");
 }
