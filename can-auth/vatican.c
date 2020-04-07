@@ -22,6 +22,7 @@
  */
 #include "vatican.h"
 #include "../drivers/irq_can.h"
+#include "../drivers/compare.c"
 #include <sancus_support/sm_io.h>
 #include <sancus_support/timer.h>
 #include <sancus_support/tsc.h>
@@ -297,7 +298,7 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
             recv_len = vatican_receive(ican, &id_recv, mac_recv.bytes, /*block=*/1);
             iat_nonce = decode_iat(iat_timings[interrupt_index] - mac_timing);
             fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||
-                (mac_me.quad != mac_recv.quad);
+                (! compare_ct_time((uint8_t *)&mac_me.quad, (uint8_t *)&mac_recv.quad, 4));
     	}
     #else
 	/* 2. authenticated connection ? calculate and verify MAC */
@@ -305,7 +306,7 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
         {
             recv_len = vatican_receive(ican, &id_recv, mac_recv.bytes, /*block=*/1);
             fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||
-                (mac_me.quad != mac_recv.quad);
+                (! compare_ct_time(&mac_me.quad, &mac_recv.quad, 4));
         }
     #endif
 
