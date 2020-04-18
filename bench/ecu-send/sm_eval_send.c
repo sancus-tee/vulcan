@@ -4,8 +4,9 @@
 #include <errno.h>
 
 #define BENCH_SEND          0
-#define BENCH_DEMO          1
+#define BENCH_DEMO          0
 #define BENCH_RTT           0
+#define BENCH_IAT           1
 
 /* Authenticated CAN interface, managed by an _unprotected_ driver. */
 DECLARE_VULCAN_ICAN(msp_ican, CAN_SPI_SS, CAN_500_KHZ, CAN_ID_PONG, CAN_ID_AEC_RECV);
@@ -141,6 +142,36 @@ void VULCAN_FUNC eval_mac(void)
 }
 #endif
 
+#ifdef BENCH_IAT
+uint64_t timings[128];
+
+void VULCAN_FUNC eval_iat(void)
+{
+    int i, len;
+
+    pr_progress("Measuring authentication frame timing");
+    for (i=0; i < 128; i++)
+    {
+        msg_id = -1;
+        do_send(&msp_ican, CAN_ID_PING, msg_ping, CAN_PAYLOAD_SIZE, /*block=*/1);
+        while ((len = do_recv(&msp_ican, &msg_id, msg_pong, /*block=*/1)) < 0);
+        
+	#ifdef VATITACAN
+	    timings[i]=get_last_iat(0);
+	#else
+	    timings[i]=get_last_iat(0);
+	#endif
+    }
+
+    pr_progress("Timings obtained: ");
+
+    for (i=0; i < 128; i++)
+    {
+        pr_info1("IAT: %u", timings[i]);
+    }
+}
+#endif
+
 void VULCAN_ENTRY eval_run(void)
 {
     int i, rv;
@@ -166,6 +197,10 @@ void VULCAN_ENTRY eval_run(void)
 
     #if BENCH_RTT
         eval_rtt();
+    #endif
+
+    #if BENCH_IAT
+        eval_iat();
     #endif
 
     pr_progress("sending stop signal to receiver process");

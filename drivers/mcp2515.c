@@ -273,7 +273,7 @@ int CAN_DRV_FUNC ican_init(ican_t *ican)
 int CAN_DRV_FUNC can_send(ican_t *ican, uint16_t id, uint16_t eid, int is_ext,
                            uint8_t *buf, uint8_t len, int block)
 {
-    uint8_t prio = 0x03, txb0ctrl = 0x00, data = 0x00;
+    uint8_t prio = 0x03, txb0ctrl = 0x00, data = 0x00, counter = 0x00;
 
 	if (len > 8 || !ican)
 		return -EINVAL;
@@ -281,6 +281,7 @@ int CAN_DRV_FUNC can_send(ican_t *ican, uint16_t id, uint16_t eid, int is_ext,
     // Send buffer available ?
     do {
         can_r_reg(ican, MCP2515_TXB0CTRL, &txb0ctrl, 1);
+	counter++;
     } while (txb0ctrl & MCP2515_TXBCTRL_TXREQ);
 
     // Load 11-bit standard ID; and MSBs extended ID if any
@@ -306,8 +307,10 @@ int CAN_DRV_FUNC can_send(ican_t *ican, uint16_t id, uint16_t eid, int is_ext,
     // Initiate transmission
     can_w_bit(ican, MCP2515_TXB0CTRL, MCP2515_TXBCTRL_TXREQ, 0x8);
 
+    //pr_info1("READ: %u", counter);
+
     // Block waiting for transmission ACK ?
-    if (!block) return 0;
+    if (!block) return counter;
 
     while (1)
     {
@@ -335,7 +338,7 @@ int CAN_DRV_FUNC can_recv(ican_t *ican, uint16_t *id, uint16_t *eid, uint8_t *bu
 	uint8_t canintf = 0x0, len = -EAGAIN;
     int rx = 0;
     if (!ican) return -EINVAL;
-
+    
     // Unread data in RXB0/RXB1?
     do {
         can_r_reg(ican, MCP2515_CANINTF, &canintf, 1); 
