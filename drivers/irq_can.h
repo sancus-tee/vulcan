@@ -10,8 +10,6 @@
 uint16_t __can_isr_stack[CAN_ISR_STACK_SIZE];
 extern void* __isr_sp;
 
-void ican_irq_init(ican_t *ican);
-
 #define CAN_ISR_ENTRY(fct)                                        \
 __attribute__((naked)) __attribute__((interrupt(CAN_IRQ_VECTOR))) \
 void can_isr_entry(void)                                         \

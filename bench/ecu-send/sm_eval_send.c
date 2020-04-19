@@ -157,9 +157,9 @@ void VULCAN_FUNC eval_iat(void)
         while ((len = do_recv(&msp_ican, &msg_id, msg_pong, /*block=*/1)) < 0);
         
 	#ifdef VATITACAN
-	    timings[i]=get_last_iat(0);
+	    timings[i]=ican_last_iat();
 	#else
-	    timings[i]=get_last_iat(0);
+	    timings[i]=ican_last_iat();
 	#endif
     }
 

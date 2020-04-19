@@ -119,6 +119,20 @@ void CAN_DRV_FUNC can_w_bit(ican_t *ican, uint8_t addr, uint8_t mask, uint8_t va
 	CAN_CS_HIGH();
 }
 
+/* ================= IRQ CAN ================= */
+
+void ican_irq_init(ican_t *ican)
+{
+    // CAN module enable interrupt on receive
+    can_w_bit(ican, MCP2515_CANINTE,  MCP2515_CANINTE_RX0IE, 0x01);
+    can_w_bit(ican, MCP2515_CANINTE,  MCP2515_CANINTE_RX1IE, 0x02);
+
+    // MSP P1.0 enable interrupt on negative edge
+    P1IE = 0x01;
+    P1IES = 0x01;
+    P1IFG = 0x00;
+}
+
 /* ================= MAINTENANCE FUNCTIONS ================= */
 
 /*
@@ -264,6 +278,10 @@ int CAN_DRV_FUNC ican_init(ican_t *ican)
 	data = MCP2515_CANCTRL_REQOP_NORMAL;
 	can_w_reg(ican, MCP2515_CANCTRL, &data, 1);
     
+    #ifdef CAN_COLLECT_IAT
+        ican_irq_init(ican);
+    #endif
+
     return rv;
 }
 
@@ -461,16 +479,37 @@ void CAN_DRV_FUNC msp_sleep(volatile uint32_t n)
   return;
 }
 
-/* ================= IRQ CAN ================= */
+/* ================= IAT COLLECTION ================= */
 
-void ican_irq_init(ican_t *ican)
+uint64_t can_iat_timings[CAN_IAT_BUFFER_SIZE];
+
+#ifdef CAN_COLLECT_IAT
+    #include <sancus_support/tsc.h>
+    DECLARE_TSC_TIMER(iat_timer);
+    uint32_t iat_index = 0x0;
+#endif
+
+#ifdef CAN_COLLECT_IAT
+    void ican_recv_callback(void)
+    {
+        // Adjust message count
+        iat_index = (iat_index+1)%CAN_IAT_BUFFER_SIZE;
+
+        // Measure + store IAT
+        TSC_TIMER_END(iat_timer);
+        can_iat_timings[iat_index] = iat_timer_get_interval();
+        TSC_TIMER_START(iat_timer);
+
+        // Clear interrupt flag on MSP430
+        P1IFG = P1IFG & 0xfc;
+    }
+#endif
+
+uint64_t CAN_DRV_FUNC ican_last_iat(void)
 {
-    // CAN module enable interrupt on receive
-    can_w_bit(ican, MCP2515_CANINTE,  MCP2515_CANINTE_RX0IE, 0x01);
-    can_w_bit(ican, MCP2515_CANINTE,  MCP2515_CANINTE_RX1IE, 0x02);
-    
-    // MSP P1.0 enable interrupt on negative edge
-    P1IE = 0x01;
-    P1IES = 0x01;
-    P1IFG = 0x00;
+    return can_iat_timings[iat_index];
 }
+
+#ifdef CAN_COLLECT_IAT
+    CAN_ISR_ENTRY(ican_recv_callback);
+#endif

@@ -5,7 +5,6 @@
 #define MCP2515_H
 
 #include "ican.h"
-#include "irq_can.h"
 
 /* send/receive empty (0x0) extended ID for standard CAN frames */
 #define MCP2515_FORCE_EID   0

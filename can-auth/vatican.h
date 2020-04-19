@@ -24,7 +24,6 @@
 
 #include <stdint.h>
 #include <sancus/sm_support.h>
-#include "../drivers/mcp2515.h"
 
 #define VATICAN_NONCE_SIZE  4
 #define VATICAN_AD_SIZE     (CAN_SID_SIZE+CAN_PAYLOAD_SIZE+VATICAN_NONCE_SIZE)
@@ -56,9 +55,5 @@ typedef union {
 #if SANCUS_TAG_SIZE != 16
     #error Sancus+vatiCAN requires 128-bit MACs
 #endif
-
-
-    uint64_t get_last_iat(int d);
-
 
 #endif
