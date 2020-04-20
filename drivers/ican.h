@@ -25,8 +25,11 @@ typedef enum
 
 #define CAN_PAYLOAD_SIZE                8
 #define CAN_SID_SIZE                    2
-#define CAN_COLLECT_IAT                 1
+
+/* IAT collection */
+#define CAN_IRQ_COLLECT_IAT             1
 #define CAN_IAT_BUFFER_SIZE             8
+
 #define ICAN_SID_MASK                   0x7FF
 
 #define ICAN_MASK_RECEIVE_ALL           0x0000

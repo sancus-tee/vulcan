@@ -288,7 +288,6 @@ int VULCAN_FUNC vulcan_send(ican_t *ican, uint16_t id, uint8_t *buf,
             // Delay authentication message
             sleep(encode_iat(vatican_cur->c)/25);
         #endif
-
         rv = vatican_send(ican, id+1, mac, CAN_PAYLOAD_SIZE, block);
     }
 

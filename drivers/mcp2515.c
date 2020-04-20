@@ -133,6 +133,37 @@ void ican_irq_init(ican_t *ican)
     P1IFG = 0x00;
 }
 
+/* ================= IAT COLLECTION ================= */
+
+#include <sancus_support/tsc.h>
+
+uint64_t can_iat_timings[CAN_IAT_BUFFER_SIZE];
+uint32_t iat_index = 0x0;
+DECLARE_TSC_TIMER(iat_timer);
+
+void ican_recv_callback(void)
+{
+    // Adjust message count
+    iat_index = (iat_index+1)%CAN_IAT_BUFFER_SIZE;
+
+    // Measure + store IAT
+    TSC_TIMER_END(iat_timer);
+    can_iat_timings[iat_index] = iat_timer_get_interval();
+    TSC_TIMER_START(iat_timer);
+
+    // Clear interrupt flag on MSP430
+    P1IFG = P1IFG & 0xfc;
+}
+
+uint64_t CAN_DRV_FUNC ican_last_iat(void)
+{
+    return can_iat_timings[iat_index];
+}
+
+#if CAN_IRQ_COLLECT_IAT
+    CAN_ISR_ENTRY(ican_recv_callback);
+#endif
+
 /* ================= MAINTENANCE FUNCTIONS ================= */
 
 /*
@@ -278,7 +309,7 @@ int CAN_DRV_FUNC ican_init(ican_t *ican)
 	data = MCP2515_CANCTRL_REQOP_NORMAL;
 	can_w_reg(ican, MCP2515_CANCTRL, &data, 1);
     
-    #ifdef CAN_COLLECT_IAT
+    #if CAN_IRQ_COLLECT_IAT
         ican_irq_init(ican);
     #endif
 
@@ -291,7 +322,7 @@ int CAN_DRV_FUNC ican_init(ican_t *ican)
 int CAN_DRV_FUNC can_send(ican_t *ican, uint16_t id, uint16_t eid, int is_ext,
                            uint8_t *buf, uint8_t len, int block)
 {
-    uint8_t prio = 0x03, txb0ctrl = 0x00, data = 0x00, counter = 0x00;
+    uint8_t prio = 0x03, txb0ctrl = 0x00, data = 0x00;
 
 	if (len > 8 || !ican)
 		return -EINVAL;
@@ -299,7 +330,6 @@ int CAN_DRV_FUNC can_send(ican_t *ican, uint16_t id, uint16_t eid, int is_ext,
     // Send buffer available ?
     do {
         can_r_reg(ican, MCP2515_TXB0CTRL, &txb0ctrl, 1);
-	counter++;
     } while (txb0ctrl & MCP2515_TXBCTRL_TXREQ);
 
     // Load 11-bit standard ID; and MSBs extended ID if any
@@ -325,10 +355,8 @@ int CAN_DRV_FUNC can_send(ican_t *ican, uint16_t id, uint16_t eid, int is_ext,
     // Initiate transmission
     can_w_bit(ican, MCP2515_TXB0CTRL, MCP2515_TXBCTRL_TXREQ, 0x8);
 
-    //pr_info1("READ: %u", counter);
-
     // Block waiting for transmission ACK ?
-    if (!block) return counter;
+    if (!block) return 0;
 
     while (1)
     {
@@ -362,11 +390,16 @@ int CAN_DRV_FUNC can_recv(ican_t *ican, uint16_t *id, uint16_t *eid, uint8_t *bu
         can_r_reg(ican, MCP2515_CANINTF, &canintf, 1); 
 	} while (!(canintf & (MCP2515_CANINTF_RX0IF | MCP2515_CANINTF_RX1IF)) && block);
 
+    #if (CAN_IRQ_COLLECT_IAT)
+    #else
+        ican_recv_callback();
+    #endif 
+
     if (canintf & MCP2515_CANINTF_RX0IF)
         len = can_r_rxb(ican, MCP2515_RXB0SIDH, id, eid, buf, MCP2515_CANINTF_RX0IF);
     else if (canintf & MCP2515_CANINTF_RX1IF)
-        len = can_r_rxb(ican, MCP2515_RXB1SIDH, id, eid, buf, MCP2515_CANINTF_RX1IF);
-        
+        len = can_r_rxb(ican, MCP2515_RXB1SIDH, id, eid, buf, MCP2515_CANINTF_RX1IF);    
+
     return len;
 }
 
@@ -478,38 +511,3 @@ void CAN_DRV_FUNC msp_sleep(volatile uint32_t n)
   }
   return;
 }
-
-/* ================= IAT COLLECTION ================= */
-
-uint64_t can_iat_timings[CAN_IAT_BUFFER_SIZE];
-
-#ifdef CAN_COLLECT_IAT
-    #include <sancus_support/tsc.h>
-    DECLARE_TSC_TIMER(iat_timer);
-    uint32_t iat_index = 0x0;
-#endif
-
-#ifdef CAN_COLLECT_IAT
-    void ican_recv_callback(void)
-    {
-        // Adjust message count
-        iat_index = (iat_index+1)%CAN_IAT_BUFFER_SIZE;
-
-        // Measure + store IAT
-        TSC_TIMER_END(iat_timer);
-        can_iat_timings[iat_index] = iat_timer_get_interval();
-        TSC_TIMER_START(iat_timer);
-
-        // Clear interrupt flag on MSP430
-        P1IFG = P1IFG & 0xfc;
-    }
-#endif
-
-uint64_t CAN_DRV_FUNC ican_last_iat(void)
-{
-    return can_iat_timings[iat_index];
-}
-
-#ifdef CAN_COLLECT_IAT
-    CAN_ISR_ENTRY(ican_recv_callback);
-#endif
