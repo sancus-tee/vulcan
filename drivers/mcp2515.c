@@ -311,7 +311,7 @@ int CAN_DRV_FUNC ican_init(ican_t *ican)
     
     #if CAN_IRQ_COLLECT_IAT
         ican_irq_init(ican);
-	asm("eint\n\t");
+        asm("eint\n\t");
     #endif
 
     TSC_TIMER_START(iat_timer);

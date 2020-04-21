@@ -306,7 +306,7 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
 
         recv_len = vatican_receive(ican, &id_recv, mac_recv.bytes, /*block=*/1);
         fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||
-            (mac_me.quad != mac_recv.quad);
+                (mac_me.quad != mac_recv.quad);
     }
 
     #if VATITACAN
