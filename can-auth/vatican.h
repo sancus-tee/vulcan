@@ -27,7 +27,11 @@
 
 #define VATICAN_NONCE_SIZE  4
 #define VATICAN_AD_SIZE     (CAN_SID_SIZE+CAN_PAYLOAD_SIZE+VATICAN_NONCE_SIZE)
-#define VATITACAN	    1
+
+/* VatiTACAN */
+#define VATITACAN	    	1
+#define VATITACAN_NONCE_SIZE    2
+#define VATITACAN_DELTA         1000
 
 typedef struct {
     uint16_t        id;

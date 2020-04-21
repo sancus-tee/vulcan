@@ -143,8 +143,6 @@ void VULCAN_FUNC eval_mac(void)
 #endif
 
 #ifdef BENCH_IAT
-uint64_t timings[128];
-
 void VULCAN_FUNC eval_iat(void)
 {
     int i, len;
@@ -156,18 +154,7 @@ void VULCAN_FUNC eval_iat(void)
         do_send(&msp_ican, CAN_ID_PING, msg_ping, CAN_PAYLOAD_SIZE, /*block=*/1);
         while ((len = do_recv(&msp_ican, &msg_id, msg_pong, /*block=*/1)) < 0);
         
-	#ifdef VATITACAN
-	    timings[i]=ican_last_iat();
-	#else
-	    timings[i]=ican_last_iat();
-	#endif
-    }
-
-    pr_progress("Timings obtained: ");
-
-    for (i=0; i < 128; i++)
-    {
-        pr_info1("IAT: %u", timings[i]);
+	pr_info1("IAT: %u\n", ican_last_iat());
     }
 }
 #endif

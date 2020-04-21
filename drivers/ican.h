@@ -86,7 +86,7 @@ int CAN_DRV_FUNC ican_recv_ext(ican_t *ican, ican_eid_t *eid, uint8_t *buf,
                            int block);
 int CAN_DRV_FUNC ican_ioctl(ican_t *ican, uint8_t option, uint8_t val);
 
-/* VatiTACAN */
+/* IAT collection */
 
 void CAN_DRV_FUNC ican_irq_init(ican_t *ican);
 
