@@ -387,7 +387,7 @@ int CAN_DRV_FUNC can_recv(ican_t *ican, uint16_t *id, uint16_t *eid, uint8_t *bu
 	uint8_t canintf = 0x0, len = -EAGAIN;
     int rx = 0;
     if (!ican) return -EINVAL;
-    
+ 
     // Unread data in RXB0/RXB1?
     do {
         can_r_reg(ican, MCP2515_CANINTF, &canintf, 1); 
@@ -401,8 +401,8 @@ int CAN_DRV_FUNC can_recv(ican_t *ican, uint16_t *id, uint16_t *eid, uint8_t *bu
     if (canintf & MCP2515_CANINTF_RX0IF)
         len = can_r_rxb(ican, MCP2515_RXB0SIDH, id, eid, buf, MCP2515_CANINTF_RX0IF);
     else if (canintf & MCP2515_CANINTF_RX1IF)
-        len = can_r_rxb(ican, MCP2515_RXB1SIDH, id, eid, buf, MCP2515_CANINTF_RX1IF);    
-
+        len = can_r_rxb(ican, MCP2515_RXB1SIDH, id, eid, buf, MCP2515_CANINTF_RX1IF);
+    
     return len;
 }
 
