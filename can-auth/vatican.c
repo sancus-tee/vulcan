@@ -319,7 +319,7 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
             if (sancus_is_outside_sm(SM_VULCAN, can_iat_timings, CAN_IAT_BUFFER_SIZE))
             #endif
 	    {
-	        iat_nonce = decode_iat(ican_last_iat()-mac_create_timer_get_interval());
+	        iat_nonce = decode_iat(can_iat_timings[can_iat_index%CAN_IAT_BUFFER_SIZE]-mac_create_timer_get_interval());
             }
 
 	    // Enable only nonce increments

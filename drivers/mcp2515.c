@@ -138,26 +138,21 @@ void ican_irq_init(ican_t *ican)
 #include <sancus_support/tsc.h>
 
 uint64_t can_iat_timings[CAN_IAT_BUFFER_SIZE];
-uint32_t iat_index = 0x0;
+int can_iat_index = 0;
 DECLARE_TSC_TIMER(iat_timer);
 
 void ican_recv_callback(void)
 {
     // Adjust message count
-    iat_index = (iat_index+1)%CAN_IAT_BUFFER_SIZE;
+    can_iat_index = (can_iat_index+1)%CAN_IAT_BUFFER_SIZE;
 
     // Measure + store IAT
     TSC_TIMER_END(iat_timer);
-    can_iat_timings[iat_index] = iat_timer_get_interval();
+    can_iat_timings[can_iat_index] = iat_timer_get_interval();
     TSC_TIMER_START(iat_timer);
 
     // Clear interrupt flag on MSP430
-    P1IFG = P1IFG & 0xfc;
-}
-
-uint64_t CAN_DRV_FUNC ican_last_iat(void)
-{
-    return can_iat_timings[iat_index];
+    P1IFG = P1IFG & 0xfc; 
 }
 
 #if CAN_IRQ_COLLECT_IAT

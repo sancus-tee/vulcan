@@ -90,7 +90,7 @@ int CAN_DRV_FUNC ican_ioctl(ican_t *ican, uint8_t option, uint8_t val);
 
 void CAN_DRV_FUNC ican_irq_init(ican_t *ican);
 
-uint64_t CAN_DRV_FUNC ican_last_iat(void);
+extern int can_iat_index;
 
 extern uint64_t can_iat_timings[CAN_IAT_BUFFER_SIZE];
 
