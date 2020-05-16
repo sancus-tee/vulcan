@@ -31,7 +31,7 @@
 /* VatiTACAN */
 #define VATITACAN               1
 #define VATITACAN_NONCE_SIZE    2
-#define VATITACAN_DELTA         1200
+#define VATITACAN_DELTA    	1200
 
 typedef struct {
     uint16_t        id;

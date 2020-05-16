@@ -31,8 +31,8 @@ VULCAN_DATA size_t             vatican_nb_connections;
 VULCAN_DATA ican_link_info_t  *vatican_cur;
 
 #if VATITACAN
-    VULCAN_DATA uint32_t	       nonce_mask = 1;
-    
+    VULCAN_DATA uint32_t	       nonce_mask = 1; 
+
     // timer for measuring MAC computation times
     DECLARE_TSC_TIMER(mac_create_timer);
 #endif
@@ -207,7 +207,7 @@ uint32_t VULCAN_FUNC encode_iat(uint32_t nonce)
 uint32_t VULCAN_FUNC decode_iat(uint64_t iat)
 {
     uint32_t deltas;
-    deltas = ((int)((iat + (VATITACAN_DELTA/2))))/((int)(VATITACAN_DELTA));
+    deltas = ((uint64_t)((iat + (VATITACAN_DELTA/2))))/((uint64_t)(VATITACAN_DELTA));
     return (deltas & nonce_mask); /* Check for IAT overflow */
 }
 #endif
@@ -241,6 +241,12 @@ int VULCAN_FUNC vulcan_init(ican_t *ican, ican_link_info_t connections[],
 	    nonce_size--;
 	}
 	nonce_mask--;
+
+	#if defined(VULCAN_SM)
+	    // Check for IAT buffer and index lying outside of PM
+            ASSERT(sancus_is_outside_sm(VULCAN_SM, can_iat_timings, CAN_IAT_BUFFER_SIZE));
+	    ASSERT(sancus_is_outside_sm(VULCAN_SM, iat_index, 1));
+        #endif
     #endif
 
     return 0;
@@ -314,13 +320,7 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
     	{
 	    old_nonce = vatican_cur->c;
 	
-	    // Check for untrusted IAT buffer being outside SM
-	    #if defined(VULCAN_SM)
-            if (sancus_is_outside_sm(SM_VULCAN, can_iat_timings, CAN_IAT_BUFFER_SIZE))
-            #endif
-	    {
-	        iat_nonce = decode_iat(can_iat_timings[can_iat_index%CAN_IAT_BUFFER_SIZE]-mac_create_timer_get_interval());
-            }
+	    iat_nonce = decode_iat(can_iat_timings[can_iat_index%CAN_IAT_BUFFER_SIZE]-mac_create_timer_get_interval());
 
 	    // Enable only nonce increments
             if ((vatican_cur->c & nonce_mask) > iat_nonce)
