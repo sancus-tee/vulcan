@@ -245,7 +245,7 @@ int VULCAN_FUNC vulcan_init(ican_t *ican, ican_link_info_t connections[],
 	#if defined(VULCAN_SM)
 	    // Check for IAT buffer and index lying outside of PM
             ASSERT(sancus_is_outside_sm(VULCAN_SM, can_iat_timings, CAN_IAT_BUFFER_SIZE));
-	    ASSERT(sancus_is_outside_sm(VULCAN_SM, iat_index, 1));
+	    ASSERT(sancus_is_outside_sm(VULCAN_SM, can_iat_index, 1));
         #endif
     #endif
 
@@ -270,8 +270,8 @@ int VULCAN_FUNC vulcan_send(ican_t *ican, uint16_t id, uint8_t *buf,
 
     /* 1. send legacy CAN message (ID | payload) */
     // NOTE: do not block for ACK, such that we can start the MAC computation
-    rv = vatican_send(ican, id, buf, len, /*block=*/1);
-
+    rv = vatican_send(ican, id, buf, len, /*block=*/0);
+    
     /* 2. known authenticated connection ? send CAN authentication frame */
     if ((rv >= 0) && (vatican_mac_create(mac, id, buf, len) >= 0))
     {
@@ -279,6 +279,7 @@ int VULCAN_FUNC vulcan_send(ican_t *ican, uint16_t id, uint8_t *buf,
             // Delay authentication message
             sleep(encode_iat(vatican_cur->c));
         #endif
+
         rv = vatican_send(ican, id+1, mac, CAN_PAYLOAD_SIZE, block);
     }
 
@@ -318,6 +319,8 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
     	/* 3.0 Retry failed verification based on IAT */
     	if (fail)
     	{
+	    pr_info("VATITACAN: retry authentication using authentication frame timing...");
+
 	    old_nonce = vatican_cur->c;
 	
 	    iat_nonce = decode_iat(can_iat_timings[can_iat_index%CAN_IAT_BUFFER_SIZE]-mac_create_timer_get_interval());
@@ -341,6 +344,8 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
             {   
                 vatican_cur->c = old_nonce;
             }
+
+	    pr_info("VATITACAN: authentication succeeded using authentication frame timing");
     	}
     #endif
 
