@@ -245,7 +245,6 @@ int VULCAN_FUNC vulcan_init(ican_t *ican, ican_link_info_t connections[],
 	#if defined(VULCAN_SM)
 	    // Check for IAT buffer and index lying outside of PM
             ASSERT(sancus_is_outside_sm(VULCAN_SM, can_iat_timings, CAN_IAT_BUFFER_SIZE));
-	    ASSERT(sancus_is_outside_sm(VULCAN_SM, can_iat_index, 1));
         #endif
     #endif
 
@@ -323,7 +322,7 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
 
 	    old_nonce = vatican_cur->c;
 	
-	    iat_nonce = decode_iat(can_iat_timings[can_iat_index%CAN_IAT_BUFFER_SIZE]-mac_create_timer_get_interval());
+	    iat_nonce = decode_iat(can_iat_timings[ican_last_index()%CAN_IAT_BUFFER_SIZE]-mac_create_timer_get_interval());
 
 	    // Enable only nonce increments
             if ((vatican_cur->c & nonce_mask) > iat_nonce)

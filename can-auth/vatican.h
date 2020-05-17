@@ -29,7 +29,7 @@
 #define VATICAN_AD_SIZE     (CAN_SID_SIZE+CAN_PAYLOAD_SIZE+VATICAN_NONCE_SIZE)
 
 /* VatiTACAN */
-#define VATITACAN               0
+#define VATITACAN               1
 #define VATITACAN_NONCE_SIZE    2
 #define VATITACAN_DELTA    	1000
 
