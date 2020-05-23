@@ -202,7 +202,13 @@ uint32_t VULCAN_FUNC encode_iat(uint32_t nonce)
 uint32_t VULCAN_FUNC decode_iat(uint64_t iat)
 {
     uint32_t deltas;
+
+    // Subtract MAC calculation latency
+    iat = iat - MAC_CREATE_TIMING;
+
+    // Divide by DELTA, and round to nearest integer
     deltas = ((uint64_t)((iat + (VATITACAN_DELTA/2))))/((uint64_t)(VATITACAN_DELTA));
+
     return (deltas & VATITACAN_NONCE_MASK); /* Check for IAT overflow */
 }
 #endif
@@ -235,6 +241,7 @@ int VULCAN_FUNC vulcan_init(ican_t *ican, ican_link_info_t connections[],
     return 0;
 }
 
+// NOTE: This is not cycle-accurate, can be rewritten in asm if it needs to be
 void VULCAN_FUNC sleep(volatile uint32_t cycles)
 {
     cycles = cycles/25;
@@ -298,7 +305,7 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
 
 	    old_nonce = vatican_cur->c;
 	
-	    iat_nonce = decode_iat(can_iat_timings[ican_last_index()%CAN_IAT_BUFFER_SIZE]-MAC_CREATE_TIMING);
+	    iat_nonce = decode_iat(can_iat_timings[ican_last_index()%CAN_IAT_BUFFER_SIZE]);
 	    
 	    // Enable only nonce increments
             if ((vatican_cur->c & VATITACAN_NONCE_MASK) > iat_nonce)
