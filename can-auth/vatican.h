@@ -40,7 +40,11 @@ typedef struct {
 #define VATITACAN               1
 #define VATITACAN_NONCE_SIZE    2
 #define VATITACAN_DELTA         1000
-#define VATITACAN_NONCE_MASK	MASK_N_BITS(VATITACAN_NONCE_SIZE)
+#ifdef VATITACAN_NONCE_SIZE
+    #define VATITACAN_NONCE_MASK	MASK_N_BITS(VATITACAN_NONCE_SIZE)
+#else
+    #define VATITACAN_NONCE_MASK        0
+#endif
 
 #ifdef VATICAN_INCLUDE_NONCE_GENERATOR
     #warning vatiCAN's global nonce generator scheme is vulnerable to advanced \

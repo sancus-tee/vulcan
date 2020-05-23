@@ -155,11 +155,6 @@ void ican_recv_callback(void)
     P1IFG = P1IFG & 0xfc; 
 }
 
-int CAN_DRV_FUNC ican_last_index(void)
-{
-    return can_iat_index;
-}
-
 #if CAN_IRQ_COLLECT_IAT
     CAN_ISR_ENTRY(ican_recv_callback);
 #endif

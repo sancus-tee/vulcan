@@ -236,6 +236,7 @@ int VULCAN_FUNC vulcan_init(ican_t *ican, ican_link_info_t connections[],
     #if (VATITACAN && defined(VULCAN_SM))
 	// Check for IAT buffer and index lying outside of PM
         ASSERT(sancus_is_outside_sm(VULCAN_SM, can_iat_timings, CAN_IAT_BUFFER_SIZE));
+	ASSERT(sancus_is_outside_sm(VULCAN_SM, can_iat_index, 1));
     #endif
 
     return 0;
@@ -268,7 +269,8 @@ int VULCAN_FUNC vulcan_send(ican_t *ican, uint16_t id, uint8_t *buf,
         #if VATITACAN
 	    if (vatican_cur != NULL)
 	    {
-                // Delay authentication message
+                /* Delay authentication message for nonce n-1 
+		 * when calculating MAC with nonce n */
                 sleep(encode_iat(vatican_cur->c));
 	    }
         #endif
@@ -308,27 +310,28 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
 
 	    old_nonce = vatican_cur->c;
 	
-	    iat_nonce = decode_iat(can_iat_timings[ican_last_index()%CAN_IAT_BUFFER_SIZE]);
+	    iat_nonce = decode_iat(can_iat_timings[can_iat_index%CAN_IAT_BUFFER_SIZE]);
 	    
 	    // Enable only nonce increments
             if ((vatican_cur->c & VATITACAN_NONCE_MASK) > iat_nonce)
             {
-            	iat_nonce = iat_nonce + VATITACAN_NONCE_MASK+1;
+                vatican_cur->c = vatican_cur->c + VATITACAN_NONCE_MASK+1;
             }
 
 	    // Retry authentication using IAT nonce
-            vatican_cur->c = (vatican_cur->c - (vatican_cur->c & VATITACAN_NONCE_MASK)) + iat_nonce;
+            vatican_cur->c = (vatican_cur->c & (~VATITACAN_NONCE_MASK)) | iat_nonce;
             vatican_mac_create(mac_me.bytes, *id, buf, rv);
-            fail = (mac_me.quad != mac_recv.quad);
-
+            
 	    // Reset to original nonce if re-authentication failed
-	    if (fail)
+	    if (mac_me.quad != mac_recv.quad)
             {   
                 vatican_cur->c = old_nonce;
             }
 	    else
 	    {
+		fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE);
 	        pr_info("VATITACAN: authentication succeeded using authentication frame timing");
+		pr_info2("VATITACAN: old nonce was: %u, new nonce is: %u\n", old_nonce, vatican_cur->c);
     	    }
 	}
     #endif
