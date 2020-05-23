@@ -32,7 +32,6 @@ VULCAN_DATA ican_link_info_t  *vatican_cur;
 
 #if VATITACAN
     VULCAN_DATA uint32_t	       MAC_CREATE_TIMING = 17997; // If printing statements enabled 17997, 3500 otherwise
-    VULCAN_DATA uint32_t	       nonce_mask = MASK_N_BITS(VATITACAN_NONCE_SIZE);
 #endif
 
 // NOTE: this approach is currently _not_ thread-safe
@@ -195,7 +194,7 @@ uint32_t VULCAN_FUNC encode_iat(uint32_t nonce)
     uint32_t masked;
 
     // Retrieve last 2 nonce bits
-    masked = nonce & nonce_mask;
+    masked = nonce & VATITACAN_NONCE_MASK;
 
     return (masked * VATITACAN_DELTA);
 }
@@ -204,7 +203,7 @@ uint32_t VULCAN_FUNC decode_iat(uint64_t iat)
 {
     uint32_t deltas;
     deltas = ((uint64_t)((iat + (VATITACAN_DELTA/2))))/((uint64_t)(VATITACAN_DELTA));
-    return (deltas & nonce_mask); /* Check for IAT overflow */
+    return (deltas & VATITACAN_NONCE_MASK); /* Check for IAT overflow */
 }
 #endif
 
@@ -302,13 +301,13 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
 	    iat_nonce = decode_iat(can_iat_timings[ican_last_index()%CAN_IAT_BUFFER_SIZE]-MAC_CREATE_TIMING);
 	    
 	    // Enable only nonce increments
-            if ((vatican_cur->c & nonce_mask) > iat_nonce)
+            if ((vatican_cur->c & VATITACAN_NONCE_MASK) > iat_nonce)
             {
-            	iat_nonce = iat_nonce + nonce_mask+1;
+            	iat_nonce = iat_nonce + VATITACAN_NONCE_MASK+1;
             }
 
 	    // Retry authentication using IAT nonce
-            vatican_cur->c = (vatican_cur->c - (vatican_cur->c & nonce_mask)) + iat_nonce;
+            vatican_cur->c = (vatican_cur->c - (vatican_cur->c & VATITACAN_NONCE_MASK)) + iat_nonce;
             if (vatican_mac_create(mac_me.bytes, *id, buf, rv) >= 0)
             {
            	fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||

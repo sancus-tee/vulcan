@@ -28,11 +28,6 @@
 #define VATICAN_NONCE_SIZE  4
 #define VATICAN_AD_SIZE     (CAN_SID_SIZE+CAN_PAYLOAD_SIZE+VATICAN_NONCE_SIZE)
 
-/* VatiTACAN */
-#define VATITACAN               1
-#define VATITACAN_NONCE_SIZE    2
-#define VATITACAN_DELTA    	1000
-
 typedef struct {
     uint16_t        id;
     const uint8_t *k_i;
@@ -40,6 +35,12 @@ typedef struct {
 } protocol_info_t;
 
 #include "vulcan.h"
+
+/* VatiTACAN */
+#define VATITACAN               1
+#define VATITACAN_NONCE_SIZE    2
+#define VATITACAN_DELTA         1000
+#define VATITACAN_NONCE_MASK	MASK_N_BITS(VATITACAN_NONCE_SIZE)
 
 #ifdef VATICAN_INCLUDE_NONCE_GENERATOR
     #warning vatiCAN's global nonce generator scheme is vulnerable to advanced \
