@@ -266,8 +266,11 @@ int VULCAN_FUNC vulcan_send(ican_t *ican, uint16_t id, uint8_t *buf,
     if ((rv >= 0) && (vatican_mac_create(mac, id, buf, len) >= 0))
     {
         #if VATITACAN
-            // Delay authentication message
-            sleep(encode_iat(vatican_cur->c));
+	    if (vatican_cur != NULL)
+	    {
+                // Delay authentication message
+                sleep(encode_iat(vatican_cur->c));
+	    }
         #endif
 
         rv = vatican_send(ican, id+1, mac, CAN_PAYLOAD_SIZE, block);
@@ -283,7 +286,7 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
     ican_buf_t mac_recv;
     uint16_t id_recv;
     uint32_t old_nonce, iat_nonce;
-    int rv, recv_len, i, fail = 0;
+    int rv, recv_len, i, fail, mac_fail = 0;
 
     /* 1. receive any CAN message (ID | payload) */
     if ((rv = vatican_receive(ican, id, buf, block)) < 0)
@@ -293,13 +296,13 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
     if (vatican_mac_create(mac_me.bytes, *id, buf, rv) >= 0)
     {
         recv_len = vatican_receive(ican, &id_recv, mac_recv.bytes, /*block=*/1);
-        fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||
-                (mac_me.quad != mac_recv.quad);
+	mac_fail = (mac_me.quad != mac_recv.quad);
+        fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) || (mac_fail);
     }
 
     #if VATITACAN
     	/* 3.0 Retry failed verification based on IAT */
-    	if (fail)
+    	if (mac_fail)
     	{
 	    pr_info("VATITACAN: retry authentication using authentication frame timing...");
 
@@ -315,11 +318,8 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
 
 	    // Retry authentication using IAT nonce
             vatican_cur->c = (vatican_cur->c - (vatican_cur->c & VATITACAN_NONCE_MASK)) + iat_nonce;
-            if (vatican_mac_create(mac_me.bytes, *id, buf, rv) >= 0)
-            {
-           	fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||
-                    (mac_me.quad != mac_recv.quad);
-            }
+            vatican_mac_create(mac_me.bytes, *id, buf, rv);
+            fail = (mac_me.quad != mac_recv.quad);
 
 	    // Reset to original nonce if re-authentication failed
 	    if (fail)
