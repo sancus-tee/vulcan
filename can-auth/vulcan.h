@@ -65,6 +65,8 @@
     #define MAC_TIMER_END()
 #endif
 
+#define MASK_N_BITS(n)        ((0x1 << n) - 1)
+
 // NOTE: protocol_info_t should be defined before this header
 typedef protocol_info_t ican_link_info_t;
 

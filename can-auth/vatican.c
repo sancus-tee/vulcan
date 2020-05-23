@@ -31,8 +31,8 @@ VULCAN_DATA size_t             vatican_nb_connections;
 VULCAN_DATA ican_link_info_t  *vatican_cur;
 
 #if VATITACAN
-    VULCAN_DATA uint32_t	       nonce_mask = 1; 
     VULCAN_DATA uint32_t	       MAC_CREATE_TIMING = 17997; // If printing statements enabled 17997, 3500 otherwise
+    VULCAN_DATA uint32_t	       nonce_mask = MASK_N_BITS(VATITACAN_NONCE_SIZE);
 #endif
 
 // NOTE: this approach is currently _not_ thread-safe
@@ -199,9 +199,7 @@ uint32_t VULCAN_FUNC encode_iat(uint32_t nonce)
 
     return (masked * VATITACAN_DELTA);
 }
-#endif
 
-#if VATITACAN
 uint32_t VULCAN_FUNC decode_iat(uint64_t iat)
 {
     uint32_t deltas;
@@ -215,7 +213,7 @@ uint32_t VULCAN_FUNC decode_iat(uint64_t iat)
 int VULCAN_FUNC vulcan_init(ican_t *ican, ican_link_info_t connections[],
                             size_t nb_connections)
 {
-    int rv, nonce_size;
+    int rv;
 
     if (!connections) return -EINVAL;
 
@@ -230,20 +228,9 @@ int VULCAN_FUNC vulcan_init(ican_t *ican, ican_link_info_t connections[],
     ASSERT(rv >= 0);
     pr_info("CAN controller initialized");
 
-    #if VATITACAN
-        // Calculate mask for IAT nonce construction
-    	nonce_size = VATITACAN_NONCE_SIZE;
-	while (nonce_size)
-	{
-	    nonce_mask = nonce_mask*2;
-	    nonce_size--;
-	}
-	nonce_mask--;
-
-	#if defined(VULCAN_SM)
-	    // Check for IAT buffer and index lying outside of PM
-            ASSERT(sancus_is_outside_sm(VULCAN_SM, can_iat_timings, CAN_IAT_BUFFER_SIZE));
-        #endif
+    #if (VATITACAN && defined(VULCAN_SM))
+	// Check for IAT buffer and index lying outside of PM
+        ASSERT(sancus_is_outside_sm(VULCAN_SM, can_iat_timings, CAN_IAT_BUFFER_SIZE));
     #endif
 
     return 0;
