@@ -160,7 +160,7 @@ void VULCAN_FUNC eval_iat(void)
         do_send(&msp_ican, CAN_ID_PING, msg_ping, CAN_PAYLOAD_SIZE, /*block=*/1);
         while ((len = do_recv(&msp_ican, &msg_id, msg_pong, /*block=*/1)) < 0);
         
-        pr_info1("IAT: %u\n", can_iat_timings[can_iat_index]);
+        pr_info1("IAT: %u\n", can_iat_timings[ican_last_index()]);
     }
 }
 #endif

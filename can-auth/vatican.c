@@ -32,9 +32,7 @@ VULCAN_DATA ican_link_info_t  *vatican_cur;
 
 #if VATITACAN
     VULCAN_DATA uint32_t	       nonce_mask = 1; 
-
-    // timer for measuring MAC computation times
-    DECLARE_TSC_TIMER(mac_create_timer);
+    VULCAN_DATA uint32_t	       MAC_CREATE_TIMING = 17997; // If printing statements enabled 17997, 3500 otherwise
 #endif
 
 // NOTE: this approach is currently _not_ thread-safe
@@ -299,16 +297,8 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
         return rv;
 
     /* 2. authenticated connection ? calculate and verify MAC */
-    #if VATITACAN
-        TSC_TIMER_START(mac_create_timer);
-    #endif
-
     if (vatican_mac_create(mac_me.bytes, *id, buf, rv) >= 0)
     {
-	#if VATITACAN
-	    TSC_TIMER_END(mac_create_timer);
-	#endif
-
         recv_len = vatican_receive(ican, &id_recv, mac_recv.bytes, /*block=*/1);
         fail = (id_recv != *id + 1) || (recv_len != CAN_PAYLOAD_SIZE) ||
                 (mac_me.quad != mac_recv.quad);
@@ -322,8 +312,8 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
 
 	    old_nonce = vatican_cur->c;
 	
-	    iat_nonce = decode_iat(can_iat_timings[ican_last_index()%CAN_IAT_BUFFER_SIZE]-mac_create_timer_get_interval());
-
+	    iat_nonce = decode_iat(can_iat_timings[ican_last_index()%CAN_IAT_BUFFER_SIZE]-MAC_CREATE_TIMING);
+	    
 	    // Enable only nonce increments
             if ((vatican_cur->c & nonce_mask) > iat_nonce)
             {
@@ -343,9 +333,11 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
             {   
                 vatican_cur->c = old_nonce;
             }
-
-	    pr_info("VATITACAN: authentication succeeded using authentication frame timing");
-    	}
+	    else
+	    {
+	        pr_info("VATITACAN: authentication succeeded using authentication frame timing");
+    	    }
+	}
     #endif
 
     /* 3. drop messages with failed authentication; else increment nonce */
