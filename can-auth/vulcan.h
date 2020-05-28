@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include <sancus/sm_support.h>
 #include "../drivers/ican.h"
+#include "../drivers/compare.h"
 
 /*
  * CAN authentication is normally performed in an SM to protect key material.
