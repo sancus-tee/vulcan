@@ -43,7 +43,7 @@
 #endif
 
 // Reduce simulation output to avoid Travis CI build timeouts
-#ifdef TRAVIS
+#ifdef TRAVIS_QUIET
     #define pr_info_buf(buf, size, str)       dump_buf(buf, size, str)
     #define pr_debug_buf(buf, size, str)
     #define pr_verbose_buf(buf, size, str)

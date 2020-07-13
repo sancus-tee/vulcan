@@ -1,5 +1,5 @@
 # comment below to benchmark (un)protected Sancus+vatiCAN/LeiA
-OPTS = BENCH=0 NOAUTH=0 VULCAN_SM=sm_eval #CAN_DRV_SM=sm_eval
+OPTS = BENCH=0 NOAUTH=0 VULCAN_SM=sm_eval #DEBUG=1 #CAN_DRV_SM=sm_eval
 
 all: send recv
 
@@ -13,14 +13,19 @@ load:
 	${MAKE} -C ecu-send load $(OPTS)
 	${MAKE} -C ecu-recv load $(OPTS)
 
+iofiles:
+	rm -f can-pong.bin can-ping.bin
+	touch can-pong.bin can-ping.bin
+
 sim-recv:
-	${MAKE} -C ecu-recv background-sim $(OPTS) QUIET=1
+	${MAKE} -C ecu-recv background-sim $(OPTS) #QUIET=1
 
 sim-send:
 	${MAKE} -C ecu-send sim $(OPTS)
 
-sim: sim-recv sim-send
+sim: iofiles sim-recv sim-send
 	@echo -e "\n\n----------\nSender/receiver $(LIBVULCAN) simulations succeeded!"
+	cat ecu-recv/sim-recv-out.txt
 
 clean:
 	$(RM) *.bin *_sloc.c sim-recv-out.txt
@@ -47,5 +52,5 @@ size:
 	msp430-strip ecu-recv/vatican.o -R .comment && msp430-size -A ecu-recv/vatican.o
 
 # NOTE: measure the amount of cycles needed to compute a MAC (depends on LIBVULCAN)
-mac:
-	$(MAKE) -C ecu-send clean sim BENCH=1 BENCH_MAC=1 VULCAN_SM=sm_eval TRAVIS=1
+mac: iofiles
+	$(MAKE) -C ecu-send clean sim BENCH=1 BENCH_MAC=1 VULCAN_SM=sm_eval

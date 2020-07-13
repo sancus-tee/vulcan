@@ -5,7 +5,7 @@ int main (void)
 {
     msp430_io_init();
 
-    #ifdef TRAVIS
+    #ifdef TRAVIS_QUIET
         pr_info("travis_ci build: not enabling SM protection "
                 "to avoid timeout");
     #else
