@@ -133,9 +133,7 @@ entire simulation takes a *long* time (about 45 minutes on our machines).
 
 The simulation output of the testbench application can also be viewed on the
 [Travis](https://travis-ci.org/sancus-pma/vulcan) continuous integration web
-interface. Note that we rely on the `TRAVIS=1` environment variable to speed up
-continuous integration builds by reducing progress output, and omitting Sancus'
-expensive key derivation process for protected modules.
+interface.
 
 **MAC computation times.** The simulator emulates CAN transceiver hardware
 using local file I/O, and can therefore *not* be used for macrobenchmark timing
