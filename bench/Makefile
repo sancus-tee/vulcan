@@ -52,5 +52,5 @@ size:
 	msp430-strip ecu-recv/vatican.o -R .comment && msp430-size -A ecu-recv/vatican.o
 
 # NOTE: measure the amount of cycles needed to compute a MAC (depends on LIBVULCAN)
-mac:
+mac: iofiles
 	$(MAKE) -C ecu-send clean sim BENCH=1 BENCH_MAC=1 VULCAN_SM=sm_eval
