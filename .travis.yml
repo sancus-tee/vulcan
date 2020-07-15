@@ -10,12 +10,12 @@ services:
 language: c
 
 before_install:
-  - git clone https://github.com/sancus-pma/sancus-main.git
+  - git clone https://github.com/sancus-tee/sancus-main.git
   - cd sancus-main/docker && make build SANCUS_SECURITY=128
 
 script:
   - docker run -t sancus-devel /bin/sh -c \
-    "git clone https://github.com/sancus-pma/vulcan && cd vulcan &&
+    "git clone https://github.com/sancus-tee/vulcan && cd vulcan &&
      git checkout $TRAVIS_BRANCH && LIBVULCAN=$LIBVULCAN TRAVIS=1 make $TARGET"
   - docker ps -a
 

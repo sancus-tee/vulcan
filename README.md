@@ -1,5 +1,5 @@
 # VulCAN: Efficient Component Authentication and Software Isolation for Automotive Control Networks
-[![Build Status](https://travis-ci.org/sancus-pma/vulcan.svg?branch=master)](https://travis-ci.org/sancus-pma/vulcan)
+[![Build Status](https://travis-ci.org/sancus-tee/vulcan.svg?branch=master)](https://travis-ci.org/sancus-tee/vulcan)
 [![License: GPL](https://img.shields.io/badge/License-GPL-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 This repository contains the source code accompanying our
@@ -43,7 +43,7 @@ toolchain (compiler, support libraries, and hardware design/simulator).
 
 To get started quickly, we offer an Ubuntu 16.04-based Docker container that
 contains all dependencies and a ready-to-use Sancus toolchain. We refer to the
-[sancus-main](https://github.com/sancus-pma/sancus-main/tree/master/docker)
+[sancus-main](https://github.com/sancus-tee/sancus-main/tree/master/docker)
 repository for detailed instructions to build and run the Docker container.
 Alternatively, sancus-main also features instructions and a Makefile to
 automatically resolve dependencies and build the latest Sancus projects from
@@ -58,7 +58,7 @@ container, proceed as follows:
 sancus-main/docker$ make build SANCUS_SECURITY=128
 sancus-main/docker$ make run
 ...
-root@b1961553622c:/sancus# git clone https://github.com/sancus-pma/vulcan.git
+root@b1961553622c:/sancus# git clone https://github.com/sancus-tee/vulcan.git
 root@b1961553622c:/sancus# cd vulcan
 ```
 
@@ -66,7 +66,7 @@ root@b1961553622c:/sancus# cd vulcan
 
 To verify whether your Sancus distribution was correctly installed, try one of
 the examples programs in the
-[sancus-examples](https://github.com/sancus-pma/sancus-examples) repository:
+[sancus-examples](https://github.com/sancus-tee/sancus-examples) repository:
 
 ```bash
 sancus-examples$ make SANCUS_SECURITY=128 hello-world.sim
@@ -132,7 +132,7 @@ entire simulation takes a *long* time (about 45 minutes on our machines).
 ![sim-output](https://distrinet.cs.kuleuven.be/software/vulcan/images/demo-sim.png)
 
 The simulation output of the testbench application can also be viewed on the
-[Travis](https://travis-ci.org/sancus-pma/vulcan) continuous integration web
+[Travis](https://travis-ci.org/sancus-tee/vulcan) continuous integration web
 interface.
 
 **MAC computation times.** The simulator emulates CAN transceiver hardware
@@ -154,7 +154,7 @@ constructed a testbench where we interfaced Sancus-enabled FPGAs with real CAN
 transceiver hardware. Our prototype setup features multiple Xess
 [XuLA2-LX25](http://www.xess.com/shop/product/xula2-lx25/) Spartan-6 FPGAs,
 each synthesized with a Sancus-enabled OpenMSP430
-[core](https://github.com/sancus-pma/sancus-core), and each connected to an
+[core](https://github.com/sancus-tee/sancus-core), and each connected to an
 off-the-shelf Modtronix [im1CAN](http://modtronix.com/im1can) SPI CAN bus
 peripheral module using the popular Microchip
 [MCP2515](http://www.microchip.com/wwwproducts/en/en010406) CAN transceiver
