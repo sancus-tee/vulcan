@@ -15,7 +15,7 @@ on:
 
 jobs:
   test-examples:
-    name: Test of ${{ matrix.example }} example
+    name: Test of ${{ matrix.library }} with target ${{ matrix.target }}
     runs-on: ubuntu-latest
     container:
       image: docker.pkg.github.com/sancus-tee/sancus-main/sancus-devel-128:latest
