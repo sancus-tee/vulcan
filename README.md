@@ -1,5 +1,5 @@
 # VulCAN: Efficient Component Authentication and Software Isolation for Automotive Control Networks
-[![Build Status](https://travis-ci.org/sancus-tee/vulcan.svg?branch=master)](https://travis-ci.org/sancus-tee/vulcan)
+[![Vulcan CI](https://github.com/sancus-tee/vulcan/actions/workflows/ci.yml/badge.svg)](https://github.com/sancus-tee/vulcan/actions/workflows/ci.yml)
 [![License: GPL](https://img.shields.io/badge/License-GPL-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 This repository contains the source code accompanying our
