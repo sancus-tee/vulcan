@@ -343,7 +343,7 @@ int VULCAN_FUNC vulcan_recv(ican_t *ican, uint16_t *id, uint8_t *buf, int block)
     id_mac_expected = auth_fail_sig ? *id : *id + 1;
 
     if (fail || (cmd_mac != cmd_expected) || (id_mac != id_mac_expected) ||
-       (len_mac != CAN_PAYLOAD_SIZE) || (mac_me.quad != mac_recv.quad))
+       (len_mac != CAN_PAYLOAD_SIZE) || (compare_ct_time((void *)&mac_me.quad, (void *)&mac_recv.quad, CAN_PAYLOAD_SIZE))) 
     {
         #ifndef LEIA_OMIT_AUTH_FAIL
             return leia_auth_fail_send(ican, *id);
