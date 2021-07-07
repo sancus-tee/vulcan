@@ -119,6 +119,46 @@ void CAN_DRV_FUNC can_w_bit(ican_t *ican, uint8_t addr, uint8_t mask, uint8_t va
 	CAN_CS_HIGH();
 }
 
+/* ================= IRQ CAN ================= */
+
+void ican_irq_init(ican_t *ican)
+{
+    // CAN module enable interrupt on receive
+    can_w_bit(ican, MCP2515_CANINTE,  MCP2515_CANINTE_RX0IE, 0x01);
+    can_w_bit(ican, MCP2515_CANINTE,  MCP2515_CANINTE_RX1IE, 0x02);
+
+    // MSP P1.0 enable interrupt on negative edge
+    P1IE = 0x01;
+    P1IES = 0x01;
+    P1IFG = 0x00;
+}
+
+/* ================= IAT COLLECTION ================= */
+
+#include <sancus_support/tsc.h>
+
+uint64_t can_iat_timings[CAN_IAT_BUFFER_SIZE];
+int can_iat_index = 0;
+DECLARE_TSC_TIMER(iat_timer);
+
+void ican_recv_callback(void)
+{
+    // Adjust message count
+    can_iat_index = (can_iat_index+1)%CAN_IAT_BUFFER_SIZE;
+
+    // Measure + store IAT
+    TSC_TIMER_END(iat_timer);
+    can_iat_timings[can_iat_index] = iat_timer_get_interval();
+    TSC_TIMER_START(iat_timer);
+
+    // Clear interrupt flag on MSP430
+    P1IFG = P1IFG & 0xfc; 
+}
+
+#if CAN_IRQ_COLLECT_IAT
+    CAN_ISR_ENTRY(ican_recv_callback);
+#endif
+
 /* ================= MAINTENANCE FUNCTIONS ================= */
 
 /*
@@ -264,6 +304,13 @@ int CAN_DRV_FUNC ican_init(ican_t *ican)
 	data = MCP2515_CANCTRL_REQOP_NORMAL;
 	can_w_reg(ican, MCP2515_CANCTRL, &data, 1);
     
+    #if CAN_IRQ_COLLECT_IAT
+        ican_irq_init(ican);
+        asm("eint\n\t");
+    #endif
+
+    TSC_TIMER_START(iat_timer);
+
     return rv;
 }
 
@@ -335,17 +382,22 @@ int CAN_DRV_FUNC can_recv(ican_t *ican, uint16_t *id, uint16_t *eid, uint8_t *bu
 	uint8_t canintf = 0x0, len = -EAGAIN;
     int rx = 0;
     if (!ican) return -EINVAL;
-
+ 
     // Unread data in RXB0/RXB1?
     do {
         can_r_reg(ican, MCP2515_CANINTF, &canintf, 1); 
 	} while (!(canintf & (MCP2515_CANINTF_RX0IF | MCP2515_CANINTF_RX1IF)) && block);
 
+    #if (CAN_IRQ_COLLECT_IAT)
+    #else
+        ican_recv_callback();
+    #endif 
+
     if (canintf & MCP2515_CANINTF_RX0IF)
         len = can_r_rxb(ican, MCP2515_RXB0SIDH, id, eid, buf, MCP2515_CANINTF_RX0IF);
     else if (canintf & MCP2515_CANINTF_RX1IF)
         len = can_r_rxb(ican, MCP2515_RXB1SIDH, id, eid, buf, MCP2515_CANINTF_RX1IF);
-        
+    
     return len;
 }
 

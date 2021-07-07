@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <errno.h>
+#include "irq_can.h"
 
 /* Data type definitions */
 
@@ -24,6 +25,11 @@ typedef enum
 
 #define CAN_PAYLOAD_SIZE                8
 #define CAN_SID_SIZE                    2
+
+/* IAT collection */
+#define CAN_IRQ_COLLECT_IAT             1
+#define CAN_IAT_BUFFER_SIZE             8
+
 #define ICAN_SID_MASK                   0x7FF
 
 #define ICAN_MASK_RECEIVE_ALL           0x0000
@@ -79,6 +85,14 @@ int CAN_DRV_FUNC ican_recv(ican_t *ican, uint16_t *id, uint8_t *buf,
 int CAN_DRV_FUNC ican_recv_ext(ican_t *ican, ican_eid_t *eid, uint8_t *buf,
                            int block);
 int CAN_DRV_FUNC ican_ioctl(ican_t *ican, uint8_t option, uint8_t val);
+
+/* IAT collection */
+
+void CAN_DRV_FUNC ican_irq_init(ican_t *ican);
+
+extern int can_iat_index;
+
+extern uint64_t can_iat_timings[CAN_IAT_BUFFER_SIZE];
 
 #define DECLARE_ICAN( ican, spi, rate, m0, m1, f0, f1, f2, f3, f4, f5)      \
     CAN_DRV_DATA ican_t ican = {                                            \

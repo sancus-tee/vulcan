@@ -4,8 +4,9 @@
 #include <errno.h>
 
 #define BENCH_SEND          0
-#define BENCH_DEMO          1
+#define BENCH_DEMO          0
 #define BENCH_RTT           0
+#define BENCH_IAT           1
 
 /* Authenticated CAN interface, managed by an _unprotected_ driver. */
 DECLARE_VULCAN_ICAN(msp_ican, CAN_SPI_SS, CAN_500_KHZ, CAN_ID_PONG, CAN_ID_AEC_RECV);
@@ -95,16 +96,22 @@ __attribute__((optnone)) /* work around compiler bug */
 
         // NOTE: vatiCAN returns -EINVAL; LeiA should automatically recover
         #ifdef VATICAN_NONCE_SIZE
-            eval_connections[1].c++;
+            eval_connections[1].c--;
         #else
             eval_connections[1].k_e[0] = 0xff;
         #endif
         rv = do_recv(&msp_ican, &msg_id, msg_pong, /*block=*/1);
-        ASSERT(rv < 0);
+
+	#ifdef VATITACAN
+            ASSERT(rv >= 0);
+	#else
+	    ASSERT(rv < 0);
+	#endif
+
         while (rv == -EAGAIN)
             rv = do_recv(&msp_ican, &msg_id, msg_pong, /*block=*/1);
 
-        ASSERT((rv == -EINVAL) || (rv >= 0 && (msg_id == CAN_ID_PONG)));
+	ASSERT((rv == -EINVAL) || (rv >= 0 && (msg_id == CAN_ID_PONG)));
         pr_progress("authentication failure test succeeded!");
     #endif
 }
@@ -141,6 +148,32 @@ void VULCAN_FUNC eval_mac(void)
 }
 #endif
 
+#ifdef BENCH_IAT
+void VULCAN_FUNC eval_iat(void)
+{
+    int i, len;
+
+    pr_progress("Measuring authentication frame timing");
+    for (i=-1; i < 128; i++)
+    {
+        msg_id = -1;
+        do_send(&msp_ican, CAN_ID_PING, msg_ping, CAN_PAYLOAD_SIZE, /*block=*/1);
+	
+	#ifdef VATITACAN
+	    // Test recovery from message loss
+	    if (i%4 == 0)
+	    {
+	        eval_connections[1].c--;
+	    }
+	#endif
+
+        while ((len = do_recv(&msp_ican, &msg_id, msg_pong, /*block=*/1)) < 0);
+        
+        pr_info1("IAT: %u\n", can_iat_timings[can_iat_index]);
+    }
+}
+#endif
+
 void VULCAN_ENTRY eval_run(void)
 {
     int i, rv;
@@ -166,6 +199,10 @@ void VULCAN_ENTRY eval_run(void)
 
     #if BENCH_RTT
         eval_rtt();
+    #endif
+
+    #if BENCH_IAT
+        eval_iat();
     #endif
 
     pr_progress("sending stop signal to receiver process");
