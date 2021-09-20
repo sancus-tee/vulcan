@@ -171,3 +171,4 @@ binary for the various scenarios discussed in the performance evaluation (sect.
 ## License
 
 VulCAN is free software, licensed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0).
+
