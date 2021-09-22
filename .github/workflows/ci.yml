@@ -1,0 +1,33 @@
+name: VulCAN CI
+
+on:
+  # Run on pushes to master
+  push:
+    branches:
+      - master
+  # Run on pull requests (automatically uses PR in docker name)
+  pull_request:
+  # Also run on a schedule (once a month)
+  schedule:
+    - cron: '0 0 1 */1 *'
+
+jobs:
+  test-examples:
+    name: Test of ${{ matrix.library }} with target ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    container:
+      image: docker.pkg.github.com/sancus-tee/sancus-main/sancus-devel-128:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    strategy:
+      matrix:
+        library: [vatican, leia]
+        target: [sim, mac, demo]
+
+    steps:
+      - uses: actions/checkout@v2
+        name: Pull repository
+      - run: LIBVULCAN=${{ matrix.library }} CI=1 make ${{ matrix.target }}
+        name: Build and run ${{ matrix.example }}
+
