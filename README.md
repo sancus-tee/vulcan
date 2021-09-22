@@ -1,5 +1,5 @@
 # VulCAN: Efficient Component Authentication and Software Isolation for Automotive Control Networks
-[![Vulcan CI](https://github.com/sancus-tee/vulcan/actions/workflows/ci.yml/badge.svg)](https://github.com/sancus-tee/vulcan/actions/workflows/ci.yml)
+[![VulCAN CI](https://github.com/sancus-tee/vulcan/actions/workflows/ci.yml/badge.svg)](https://github.com/sancus-tee/vulcan/actions/workflows/ci.yml)
 [![License: GPL](https://img.shields.io/badge/License-GPL-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 This repository contains the source code accompanying our
@@ -132,7 +132,7 @@ entire simulation takes a *long* time (about 45 minutes on our machines).
 ![sim-output](https://distrinet.cs.kuleuven.be/software/vulcan/images/demo-sim.png)
 
 The simulation output of the testbench application can also be viewed on the
-[Travis](https://travis-ci.org/sancus-tee/vulcan) continuous integration web
+[GitHub actions](https://github.com/sancus-tee/vulcan/actions) continuous integration web
 interface.
 
 **MAC computation times.** The simulator emulates CAN transceiver hardware

@@ -1,6 +1,4 @@
-# This is the ci workflow to run after the docker push
-
-name: Vulcan CI
+name: VulCAN CI
 
 on:
   # Run on pushes to master
@@ -24,19 +22,8 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       matrix:
-        include:
-          - library: vatican 
-            target: sim
-          - library: leia    
-            target: sim
-          - library: vatican 
-            target: mac
-          - library: leia    
-            target: mac
-          - library: vatican 
-            target: demo
-          - library: leia    
-            target: demo
+        library: [vatican, leia]
+        target: [sim, mac, demo]
 
     steps:
       - uses: actions/checkout@v2
